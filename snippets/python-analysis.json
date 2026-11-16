@@ -1,0 +1,31 @@
+{
+  "ロジスティック回帰 statsmodels(OR表)": {
+    "prefix": "smlogit",
+    "body": [
+      "import numpy as np",
+      "import statsmodels.formula.api as smf",
+      "# 日本語/記号の列名は Q(\"年齢\") で囲む",
+      "m = smf.logit(\"${1:y} ~ ${2:x} + ${3:age}\", data=${4:df}).fit(disp=0)",
+      "or_tab = pd.concat([np.exp(m.params), np.exp(m.conf_int()), m.pvalues], axis=1)",
+      "or_tab.columns = [\"OR\", \"2.5%\", \"97.5%\", \"p\"]",
+      "or_tab.round(3)$0"
+    ]
+  },
+  "線形回帰 statsmodels": {
+    "prefix": "smols",
+    "body": [
+      "import statsmodels.formula.api as smf",
+      "m = smf.ols(\"${1:y} ~ ${2:x} + ${3:age}\", data=${4:df}).fit()",
+      "m.summary()$0"
+    ]
+  },
+  "parquet 読込+型・欠測確認": {
+    "prefix": "rpq",
+    "body": [
+      "${1:df} = pd.read_parquet(\"${2:data/data.parquet}\")",
+      "print($1.shape)",
+      "print($1.dtypes.value_counts())",
+      "$1.isna().sum().sort_values(ascending=False).head(20)$0"
+    ]
+  }
+}

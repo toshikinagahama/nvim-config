@@ -1,0 +1,59 @@
+{
+  "main.qmd 冒頭(utils読込+データ+キャッシュ連動)": {
+    "prefix": "setup",
+    "body": [
+      "```{r}",
+      "#| label: setup",
+      "#| include: false",
+      "source(\"scripts/utils.R\")",
+      "df <- arrow::read_parquet(\"${1:data/data.parquet}\")",
+      "knitr::opts_chunk\\$set(",
+      "  cache.extra = c(file.mtime(\"$1\"), file.mtime(\"scripts/utils.R\")),",
+      "  autodep = TRUE",
+      ")",
+      "```",
+      "$0"
+    ]
+  },
+  "パーツを include": {
+    "prefix": "inc",
+    "body": [
+      "{{< include ${1:01_xxx}.qmd >}}$0"
+    ]
+  },
+  "gt 表フォントを Times New Roman に": {
+    "prefix": "gtfont",
+    "body": [
+      "```{css}",
+      ".gt_table { font-family: \"Times New Roman\", \"Yu Mincho\", serif !important; }",
+      "```"
+    ]
+  },
+  "図表番号を日本語に(YAML: 図1 / 表1)": {
+    "prefix": "xrefja",
+    "body": [
+      "lang: ja",
+      "crossref:",
+      "  fig-prefix: 図",
+      "  tbl-prefix: 表",
+      "  fig-title: 図",
+      "  tbl-title: 表",
+      "  title-delim: \"　\"",
+      "# 本文での参照: @fig-xxx に示す / @tbl-xxx の通り$0"
+    ]
+  },
+  "再現性情報(末尾にパッケージ版)": {
+    "prefix": "sinfo",
+    "body": [
+      "## 実行環境 {.appendix}",
+      "",
+      "```{r}",
+      "#| label: session-info",
+      "#| echo: false",
+      "#| cache: false",
+      "sessionInfo()",
+      "```",
+      "$0"
+    ]
+  }
+}

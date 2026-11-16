@@ -1,0 +1,37 @@
+{
+  "name": "local-snippets",
+  "contributes": {
+    "snippets": [
+      {
+        "language": [
+          "quarto",
+          "markdown"
+        ],
+        "path": "./quarto.json"
+      },
+      {
+        "language": [
+          "quarto",
+          "markdown"
+        ],
+        "path": "./quarto-extra.json"
+      },
+      {
+        "language": [
+          "quarto",
+          "markdown",
+          "r"
+        ],
+        "path": "./r-analysis.json"
+      },
+      {
+        "language": [
+          "quarto",
+          "markdown",
+          "python"
+        ],
+        "path": "./python-analysis.json"
+      }
+    ]
+  }
+}

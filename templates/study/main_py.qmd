@@ -1,0 +1,36 @@
+---
+subtitle: "全体まとめ"
+jupyter: python3
+execute:
+  cache: true   # jupyter-cache(uv pip install jupyter-cache)。ノートブック単位: どこか変えると全体を再実行
+  error: true
+---
+
+```{python}
+#| label: setup
+#| include: false
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_parquet("data/data.parquet")  # プロジェクト直下基準(execute-dir: project)
+
+# 重い計算はチャンク単位でディスクにキャッシュ(関数のコードか引数が変わったら再計算)
+# uv pip install joblib
+from joblib import Memory
+
+memory = Memory("output/cache/joblib", verbose=0)
+# 使い方:
+#   @memory.cache
+#   def fit_models(df): ...
+#   res = fit_models(df)
+```
+
+<!--
+キャッシュのコツ(Python)
+- jupyter-cache はファイル全体で1つ。1か所直すと全体再実行 → 重い所は上の memory.cache に入れる
+- データ更新時: memory.clear() か output/cache/joblib を消す
+- 全部作り直す: :!quarto render % --cache-refresh
+- 書き出したくない試行錯誤は .py(# %% セル)で回し、確定した処理だけ qmd へ
+-->
+
+{{< include 01_{{PART}}.qmd >}}

@@ -1,0 +1,125 @@
+{
+  "群比較表 tbl_summary(中央値IQR+p)": {
+    "prefix": "tbby",
+    "body": [
+      "${1:df} %>%",
+      "  dplyr::select(${2:vars}, ${3:group}) %>%",
+      "  tbl_summary(",
+      "    by = $3,",
+      "    type = where(is.numeric) ~ \"continuous\",",
+      "    statistic = all_continuous() ~ \"{median} ({p25}, {p75})\",",
+      "    missing = \"no\"",
+      "  ) %>%",
+      "  add_n() %>%",
+      "  add_p()$0"
+    ]
+  },
+  "1変数ずつロジスティック(調整あり) tbl_uvregression": {
+    "prefix": "uvreg",
+    "body": [
+      "${1:df} %>%",
+      "  dplyr::select(${2:outcome}, ${3:vars}, ${4:age}) %>%",
+      "  tbl_uvregression(",
+      "    method = glm, y = $2, include = -$4,",
+      "    formula = \"{y} ~ {x} + $4\",",
+      "    method.args = list(family = binomial), exponentiate = TRUE",
+      "  )$0"
+    ]
+  },
+  "調整なし/ありを横並び tbl_merge": {
+    "prefix": "tbmerge",
+    "body": [
+      "tbl_merge(list(${1:t_crude}, ${2:t_adj}), tab_spanner = c(\"**調整なし**\", \"**調整あり**\"))$0"
+    ]
+  },
+  "フォレストプロット(見出しなし)": {
+    "prefix": "forest",
+    "body": [
+      "plot(${1:t_adj}) + facet_null() + labs(title = NULL)$0"
+    ]
+  },
+  "ROC曲線+AUC(95%CI)": {
+    "prefix": "roc",
+    "body": [
+      "roc_${1:m} <- pROC::roc(${2:m_all}\\$y, fitted($2), quiet = TRUE)",
+      "ci_$1 <- pROC::ci.auc(roc_$1)",
+      "pROC::ggroc(roc_$1, legacy.axes = TRUE) +",
+      "  geom_abline(linetype = 2, color = \"grey60\") +",
+      "  annotate(\"text\", x = 0.5, y = 0.15, hjust = 0,",
+      "           label = sprintf(\"AUC = %.2f\\n(95%%CI %.2f-%.2f)\", ci_$1[2], ci_$1[1], ci_$1[3])) +",
+      "  labs(x = \"1 - 特異度\", y = \"感度\") + coord_equal() + theme_minimal()$0"
+    ]
+  },
+  "尤度比検定(入れ子モデル)": {
+    "prefix": "lrt",
+    "body": [
+      "anova(${1:m0}, ${2:m_all}, test = \"LRT\")$0"
+    ]
+  },
+  "標準化(1SDあたりにする)": {
+    "prefix": "zscale",
+    "body": [
+      "${1:df_z} <- ${2:df} %>% dplyr::mutate(dplyr::across(all_of(${3:vars}), \\(x) as.numeric(scale(x))))$0"
+    ]
+  },
+  "図を保存 ggsave": {
+    "prefix": "ggsave",
+    "body": [
+      "ggsave(\"output/fig/${1:name}.png\", ${2:last_plot()}, width = ${3:7}, height = ${4:5}, dpi = 300)$0"
+    ]
+  },
+  "オブジェクト保存/読込(補足資料用)": {
+    "prefix": "rds",
+    "body": [
+      "saveRDS(${1:obj}, \"output/rds/$1.rds\")",
+      "# $1 <- readRDS(\"output/rds/$1.rds\")$0"
+    ]
+  },
+  "facet の見出し(strip)を消す": {
+    "prefix": "nostrip",
+    "body": [
+      "theme(strip.text = element_blank(), strip.text.y.left = element_blank(), strip.text.y = element_blank())$0"
+    ]
+  },
+  "targets 結果を読む": {
+    "prefix": "tarl",
+    "body": [
+      "targets::tar_load(${1:name})$0"
+    ]
+  },
+  "表をWordに書き出し(gtsummary→flextable→docx)": {
+    "prefix": "todocx",
+    "body": [
+      "${1:tbl} %>%",
+      "  as_flex_table() %>%   # data.frame なら flextable::flextable($1)",
+      "  flextable::font(fontname = \"${2:Times New Roman}\", part = \"all\") %>%",
+      "  flextable::autofit() %>%",
+      "  flextable::save_as_docx(path = \"output/${3:table1}.docx\")$0"
+    ]
+  },
+  "変数ラベル一括(gtsummary の表示名になる)": {
+    "prefix": "labels",
+    "body": [
+      "${1:df} <- labelled::set_variable_labels($1,",
+      "  ${2:age} = \"${3:年齢}\",",
+      "  $0",
+      ")"
+    ]
+  },
+  "論文用 ggplot テーマ(日本語フォント)": {
+    "prefix": "thpub",
+    "body": [
+      "# フォント: Mac=\"Hiragino Sans\" / Linux=\"Noto Sans CJK JP\"",
+      "theme_pub <- function(base_size = ${1:11}, base_family = \"${2:Hiragino Sans}\") {",
+      "  theme_classic(base_size = base_size, base_family = base_family) +",
+      "    theme(",
+      "      axis.text = element_text(color = \"black\"),",
+      "      legend.position = \"bottom\",",
+      "      strip.background = element_blank(),",
+      "      plot.title.position = \"plot\"",
+      "    )",
+      "}",
+      "theme_set(theme_pub())$0"
+    ]
+  }
+}

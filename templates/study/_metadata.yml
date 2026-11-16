@@ -1,0 +1,2 @@
+# このフォルダの qmd 共通(analysis/_metadata.yml を継承)
+title: "{{TITLE}}"

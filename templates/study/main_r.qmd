@@ -1,0 +1,33 @@
+---
+subtitle: "全体まとめ"
+execute:
+  cache: true   # チャンク単位のキャッシュ(knitr)。変更したチャンクと、その結果に依存するチャンクだけ再実行
+  error: true   # 途中で落ちても最後まで出力(どこで落ちたか分かる)。落ちたら \qe で元のパーツへ
+---
+
+```{r}
+#| label: setup
+#| include: false
+#| cache: false
+# パスはプロジェクト直下基準(_quarto.yml の execute-dir: project)
+source("scripts/utils.R")
+df <- arrow::read_parquet("data/data.parquet")
+
+# データ・utils.R を更新したら全キャッシュを自動で無効化
+knitr::opts_chunk$set(
+  cache.extra = c(file.mtime("data/data.parquet"), file.mtime("scripts/utils.R")),
+  autodep = TRUE # チャンク間の変数依存を自動検出
+)
+```
+
+<!--
+キャッシュのコツ
+- パーツ(01_ 02_ …)のチャンクラベルは全体で一意に。ラベルが変わるとキャッシュも作り直し
+- 乱数を使うチャンクは中で set.seed()
+- 全部作り直す: :!quarto render % --cache-refresh
+- Python チャンクを混ぜる場合(knitr+reticulate)は Python チャンクに #| cache: false
+  (キャッシュされた Python チャンクは実行が飛ばされ、import や変数が消えるため)
+- 重い処理は targets(:AnalysisTargetsInit)に逃がして、ここでは targets::tar_load() で読むだけにするのが確実
+-->
+
+{{< include 01_{{PART}}.qmd >}}

@@ -1,0 +1,41 @@
+# analysis/ 以下の全 qmd 共通(子フォルダにも継承)。パスはこのファイルの場所(analysis/)基準
+author: "名前"
+from: markdown+mark
+format:
+  html:
+    theme: [cosmo, templates/slides-work.scss]
+    toc: true
+    toc-location: left
+    page-layout: full
+    embed-resources: true
+  # 発表用スライドにするときは html を消してこちらを有効に
+  # revealjs:
+  #   width: 1280
+  #   height: 960
+  #   slide-number: true
+  #   embed-resources: true
+  #   center: false
+  #   slide-level: 2
+  #   toc: true
+  #   toc-depth: 2
+  #   toc-title: "目次"
+  #   footer: "Confidential"
+  #   theme: [simple, templates/slides-work.scss]
+  #   include-after-body: templates/section-label.html
+  # PowerPoint にするとき(16:9・本文16pt・黒帯タイトル・表は横罫線+Times。フッター文字は reference.pptx 内)
+  # pptx:
+  #   reference-doc: templates/reference.pptx
+  #   filters:                       # 相互参照付き表({#tbl-}/tbl-cap)が消えるのを防ぐ
+  #     - path: templates/pptx-tables.lua
+  #       at: pre-render
+  # 章ラベル・表キャプションを上へ: \qx は自動。ターミナルからも効かせるなら _quarto.yml に
+  #   project:
+  #     post-render: analysis/templates/pptx_post.py   (要 python-pptx)
+execute:
+  echo: false
+  message: false
+  warning: false
+lang: en
+crossref:
+  fig-title: "Fig"
+  tbl-title: "Table"

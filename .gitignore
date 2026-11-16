@@ -1,0 +1,12 @@
+tt.*
+.tests
+doc/tags
+debug
+.repro
+foo.*
+*.log
+data
+*.bak*
+_bak_*/
+*.otter.*
+lua/config/local.lua

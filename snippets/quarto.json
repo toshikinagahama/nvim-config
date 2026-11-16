@@ -1,0 +1,125 @@
+{
+  "2カラム(左Rチャンク/右テキスト)": {
+    "prefix": "cols",
+    "body": [
+      ":::: {.columns}",
+      "::: {.column width=\"${1:60}%\"}",
+      "```{${2:r}}",
+      "$3",
+      "```",
+      ":::",
+      "",
+      "::: {.column width=\"${4:40}%\"}",
+      "$0",
+      ":::",
+      "::::"
+    ]
+  },
+  "Rチャンク": {
+    "prefix": "rc",
+    "body": [
+      "```{r}",
+      "$0",
+      "```"
+    ]
+  },
+  "Pythonチャンク": {
+    "prefix": "pc",
+    "body": [
+      "```{python}",
+      "$0",
+      "```"
+    ]
+  },
+  "図チャンク(相互参照)": {
+    "prefix": "fig",
+    "body": [
+      "```{${1:r}}",
+      "#| label: fig-${2:name}",
+      "#| fig-cap: \"${3:キャプション}\"",
+      "#| fig-width: ${4:7}",
+      "#| fig-height: ${5:5}",
+      "$0",
+      "```"
+    ]
+  },
+  "表チャンク(相互参照)": {
+    "prefix": "tbl",
+    "body": [
+      "```{${1:r}}",
+      "#| label: tbl-${2:name}",
+      "#| tbl-cap: \"${3:キャプション}\"",
+      "$0",
+      "```"
+    ]
+  },
+  "gtsummary 群別表": {
+    "prefix": "tbs",
+    "body": [
+      "df %>%",
+      "  select(${1:変数}, ${2:性別}) %>%",
+      "  tbl_summary(by = $2, missing = \"no\") %>%",
+      "  add_overall() %>%",
+      "  add_p()$0"
+    ]
+  },
+  "キャッシュ付きRチャンク(Rのみ)": {
+    "prefix": "cache",
+    "body": [
+      "```{r}",
+      "#| cache: true",
+      "$0",
+      "```"
+    ]
+  },
+  "Python表をmarkdownで出力": {
+    "prefix": "asis",
+    "body": [
+      "```{python}",
+      "#| output: asis",
+      "print(${1:df}.to_markdown(index=False))$0",
+      "```"
+    ]
+  },
+  "タブ切替": {
+    "prefix": "tabs",
+    "body": [
+      "::: {.panel-tabset}",
+      "",
+      "## ${1:タブ1}",
+      "",
+      "$2",
+      "",
+      "## ${3:タブ2}",
+      "",
+      "$0",
+      "",
+      ":::"
+    ]
+  },
+  "注意書きボックス": {
+    "prefix": "callout",
+    "body": [
+      "::: {.callout-${1|note,tip,warning,important,caution|}}",
+      "## ${2:タイトル}",
+      "$0",
+      ":::"
+    ]
+  },
+  "コード折りたたみ表示": {
+    "prefix": "fold",
+    "body": [
+      "```{${1:r}}",
+      "#| echo: true",
+      "#| code-fold: true",
+      "$0",
+      "```"
+    ]
+  },
+  "TODOメモ(レンダー非表示)": {
+    "prefix": "todo",
+    "body": [
+      "<!-- TODO: $0 -->"
+    ]
+  }
+}

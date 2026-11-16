@@ -1,0 +1,13 @@
+<script>
+// 各スライド(##)のタイトル上に、所属する章(#)名をグレーで表示
+document.querySelectorAll(".reveal .slides > section").forEach(function (stack) {
+  var h1 = stack.querySelector(":scope > section.level1 > h1");
+  if (!h1) return;
+  stack.querySelectorAll(":scope > section.level2 > h2").forEach(function (h2) {
+    var label = document.createElement("div");
+    label.className = "section-label";
+    label.textContent = h1.textContent;
+    h2.parentNode.insertBefore(label, h2);
+  });
+});
+</script>
