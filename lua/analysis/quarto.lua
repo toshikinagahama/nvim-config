@@ -399,6 +399,13 @@ end
 -- ---------------------------------------------------------------------------
 -- 8. スニペットピッカー(snippets/*.json を一覧+プレビュー → 選んで展開)
 -- ---------------------------------------------------------------------------
+-- JSON の任意キー: "category" = タブ、"key" = <localleader>s<key> で直接挿入
+--   category が無ければファイルごとの既定(下の表)→ "その他"
+local SNIP_FILE_CAT = { ["r-analysis.json"] = "R", ["python-analysis.json"] = "Python" }
+local SNIP_ORDER = { "レイアウト", "図表", "callout", "文中", "スライド", "チャンク", "文書" }
+-- 解析コードは \aw(分析レシピ)で入れるので、一覧には出さない(補完の prefix では使える)
+local SNIP_HIDDEN = { R = true, Python = true }
+
 local function load_snippets(ft)
   local dir = config_dir .. "/snippets"
   local ok, pkg = pcall(vim.json.decode, table.concat(vim.fn.readfile(dir .. "/package.json"), "\n"))
@@ -407,11 +414,18 @@ local function load_snippets(ft)
   for _, s in ipairs(pkg.contributes.snippets or {}) do
     local langs = type(s.language) == "table" and s.language or { s.language }
     if vim.tbl_contains(langs, ft) then
-      local okf, data = pcall(vim.json.decode, table.concat(vim.fn.readfile(dir .. "/" .. s.path:gsub("^%./", "")), "\n"))
+      local file = s.path:gsub("^%./", "")
+      local okf, data = pcall(vim.json.decode, table.concat(vim.fn.readfile(dir .. "/" .. file), "\n"))
       if okf then
         for name, sn in pairs(data) do
           local body = type(sn.body) == "table" and table.concat(sn.body, "\n") or sn.body
-          out[#out + 1] = { name = name, prefix = sn.prefix, body = body, desc = sn.description }
+          local cat = sn.category or SNIP_FILE_CAT[file] or "その他"
+          if not SNIP_HIDDEN[cat] then
+            out[#out + 1] = {
+              name = name, prefix = sn.prefix, body = body, desc = sn.description,
+              cat = cat, key = sn.key,
+            }
+          end
         end
       end
     end
@@ -420,7 +434,86 @@ local function load_snippets(ft)
   return out
 end
 
-function M.snippets()
+-- ビジュアル選択の範囲と中身(選択を抜けてから呼ぶ)
+local function visual_selection()
+  local mode = vim.fn.visualmode()
+  local s, e = vim.fn.getpos("'<"), vim.fn.getpos("'>")
+  local sr, sc, er, ec = s[2] - 1, s[3] - 1, e[2] - 1, e[3]
+  if mode == "V" then
+    return { linewise = true, sr = sr, er = er, text = table.concat(vim.api.nvim_buf_get_lines(0, sr, er + 1, false), "\n") }
+  end
+  local last = vim.api.nvim_buf_get_lines(0, er, er + 1, false)[1] or ""
+  ec = math.min(ec, #last)
+  -- マルチバイト文字の途中で切れないよう、終端を文字の終わりまで伸ばす
+  if ec > 0 and ec < #last then
+    ec = ec + #vim.fn.strcharpart(last:sub(ec), 0, 1) - 1
+  end
+  return { sr = sr, sc = sc, er = er, ec = ec, text = table.concat(vim.api.nvim_buf_get_text(0, sr, sc, er, ec, {}), "\n") }
+end
+
+local function snippet_escape(text)
+  return (text:gsub("[\\$}]", "\\%0"))
+end
+
+-- スニペットを展開。sel があれば選択範囲を消して、最初の $0 の位置に選択の中身を入れる
+local function expand(body, where, sel)
+  vim.api.nvim_set_current_win(where.win)
+  local target -- 展開位置 { row(1始まり), col(バイト) }
+  if sel then
+    local pos = body:find("$0", 1, true)
+    if pos then
+      body = body:sub(1, pos - 1) .. snippet_escape(sel.text) .. body:sub(pos)
+    end
+    if sel.linewise then
+      vim.api.nvim_buf_set_lines(where.buf, sel.sr, sel.er + 1, false, { "" })
+      target = { sel.sr + 1, 0 }
+    else
+      vim.api.nvim_buf_set_text(where.buf, sel.sr, sel.sc, sel.er, sel.ec, { "" })
+      target = { sel.sr + 1, sel.sc }
+    end
+  else
+    local row = where.pos[1]
+    local line = vim.api.nvim_buf_get_lines(where.buf, row - 1, row, false)[1] or ""
+    if where.insert then
+      target = where.pos
+    elseif line:match("^%s*$") then
+      target = { row, 0 }
+    elseif body:find("\n") then
+      -- 複数行のスニペットは下の行に
+      vim.api.nvim_buf_set_lines(where.buf, row, row, false, { "" })
+      target = { row + 1, 0 }
+    else
+      -- 1行のもの(脚注・色など)はカーソル文字の後ろに
+      target = { row, where.pos[2] + #vim.fn.strcharpart(line:sub(where.pos[2] + 1), 0, 1) }
+    end
+  end
+  -- インサートモードに入ったのを確かめてから(InsertEnter)カーソルを置いて展開する
+  --   行末にも置けるのはインサート中だけなので、タイミング任せにしない
+  local function go()
+    pcall(vim.api.nvim_win_set_cursor, where.win, target)
+    vim.snippet.expand(body)
+  end
+  if vim.fn.mode() == "i" then
+    return vim.schedule(go)
+  end
+  vim.api.nvim_create_autocmd("InsertEnter", {
+    once = true,
+    callback = function()
+      vim.schedule(go)
+    end,
+  })
+  local tline = vim.api.nvim_buf_get_lines(where.buf, target[1] - 1, target[1], false)[1] or ""
+  vim.cmd(target[2] >= #tline and "startinsert!" or "startinsert")
+end
+
+-- opts.visual = true: ビジュアル選択を包む(キーマップの x モードから)
+function M.snippets(opts)
+  opts = opts or {}
+  local sel
+  if opts.visual then
+    vim.cmd("normal! \27")
+    sel = visual_selection()
+  end
   local where = A.capture_pos()
   local ft = vim.bo.filetype
   local list = load_snippets(ft)
@@ -429,32 +522,48 @@ function M.snippets()
   for _, s in ipairs(list) do
     local prefix = type(s.prefix) == "table" and table.concat(s.prefix, ",") or (s.prefix or "")
     -- 見やすさのためプレビューではプレースホルダを中身だけに
-    local shown = s.body:gsub("%${%d+:([^}]*)}", "%1"):gsub("%$%d+", "")
+    local shown = s.body:gsub("%${%d+|([^,|}]*)[^}]*|}", "%1"):gsub("%${%d+:([^}]*)}", "%1"):gsub("%${%d+}", ""):gsub("%$%d+", "")
+    shown = shown:gsub("\\%$", "$")
     items[#items + 1] = {
-      text = s.name .. " " .. prefix, label = s.name, detail = prefix, body = s.body,
+      text = s.cat .. " " .. s.name .. " " .. prefix,
+      label = s.name,
+      detail = prefix .. (s.key and ("  \\s" .. s.key) or ""),
+      cat = s.cat,
+      body = s.body,
       preview = { text = shown, ft = ft == "quarto" and "markdown" or ft },
     }
   end
-  A.picker({
-    title = "スニペット (" .. ft .. ")",
+  A.tab_picker({
+    name = "スニペット(" .. ft .. ")" .. (sel and " 選択を包む" or ""),
     items = items,
-    on_pick = function(sel)
-      local body = sel[1].body
-      vim.api.nvim_set_current_win(where.win)
-      local row = where.pos[1]
-      local line = vim.api.nvim_buf_get_lines(where.buf, row - 1, row, false)[1] or ""
-      if where.insert then
-        vim.api.nvim_win_set_cursor(where.win, where.pos)
-      elseif line:match("^%s*$") then
-        vim.api.nvim_win_set_cursor(where.win, { row, 0 })
-      else
-        vim.api.nvim_buf_set_lines(where.buf, row, row, false, { "" })
-        vim.api.nvim_win_set_cursor(where.win, { row + 1, 0 })
-      end
-      vim.cmd("startinsert")
-      vim.schedule(function() vim.snippet.expand(body) end)
+    order = SNIP_ORDER,
+    on_pick = function(picked)
+      expand(picked[1].body, where, sel)
     end,
   })
+end
+
+-- "key" を持つスニペットを <localleader>s<key> に割り当てる(バッファローカル)
+--   ノーマル/インサート位置に挿入、ビジュアルなら選択を包む
+function M.snippet_keys(buf)
+  local ft = vim.bo[buf].filetype
+  for _, s in ipairs(load_snippets(ft)) do
+    if s.key then
+      local lhs = "<localleader>s" .. s.key
+      vim.keymap.set("n", lhs, function()
+        expand(s.body, A.capture_pos())
+      end, { buffer = buf, desc = s.name })
+      vim.keymap.set("x", lhs, function()
+        vim.cmd("normal! \27")
+        local sel = visual_selection()
+        expand(s.body, A.capture_pos(), sel)
+      end, { buffer = buf, desc = s.name .. "(選択を包む)" })
+    end
+  end
+  vim.keymap.set("n", "<localleader>ss", M.snippets, { buffer = buf, desc = "スニペット一覧(タブ)" })
+  vim.keymap.set("x", "<localleader>ss", function()
+    M.snippets({ visual = true })
+  end, { buffer = buf, desc = "スニペット一覧 → 選択を包む" })
 end
 
 -- コードチャンクの範囲 { {s, e}, ... }(s = ```{ の行, e = 閉じ ``` の行)

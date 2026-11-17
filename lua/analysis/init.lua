@@ -287,6 +287,97 @@ local function picker(opts)
 end
 M.picker = picker
 
+-- カテゴリのタブ付きピッカー
+--   opts.items[i].cat でタブに分ける。opts.order = タブの並び順(無いカテゴリは出てきた順で後ろ)
+--   Tab / S-Tab・C-l / C-h(入力欄でも)、H / L(ノーマルモード)でタブ切替
+--   タブ列は入力欄の幅に収まる分だけ、今のタブを中心に表示(はみ出す側に ‹ / ›)
+function M.tab_picker(opts)
+  local by_cat, cats = {}, {}
+  for _, it in ipairs(opts.items) do
+    local cat = it.cat or "その他"
+    if not by_cat[cat] then
+      by_cat[cat] = {}
+      cats[#cats + 1] = cat
+    end
+    table.insert(by_cat[cat], it)
+  end
+  local rank, first = {}, {}
+  for i, c in ipairs(opts.order or {}) do
+    rank[c] = i
+  end
+  for i, c in ipairs(cats) do
+    first[c] = i
+  end
+  table.sort(cats, function(a, b)
+    return (rank[a] or (1000 + first[a])) < (rank[b] or (1000 + first[b]))
+  end)
+  by_cat["全部"] = {}
+  for _, c in ipairs(cats) do
+    vim.list_extend(by_cat["全部"], by_cat[c])
+  end
+  table.insert(cats, 1, "全部")
+
+  local idx = 1
+  local function title(width)
+    local W = vim.fn.strdisplaywidth
+    local head = ("%s %d/%d "):format(opts.name, idx, #cats)
+    -- 初回は窓がまだ無いので、default レイアウトの入力欄の幅(全体 80% の左半分)で見積もる
+    local avail = (width or math.floor(vim.o.columns * 0.4)) - W(head) - 6
+    local function label(i)
+      return i == idx and ("【" .. cats[i] .. " " .. #by_cat[cats[i]] .. "】") or cats[i]
+    end
+    local lo, hi = idx, idx
+    local used = W(label(idx))
+    local grew = true
+    while grew do
+      grew = false
+      for _, side in ipairs({ 1, -1 }) do
+        local j = side == 1 and hi + 1 or lo - 1
+        if cats[j] and used + 1 + W(label(j)) + 4 <= avail then
+          used = used + 1 + W(label(j))
+          if side == 1 then hi = j else lo = j end
+          grew = true
+        end
+      end
+    end
+    local parts = {}
+    for i = lo, hi do
+      parts[#parts + 1] = label(i)
+    end
+    return head .. (lo > 1 and "‹ " or "") .. table.concat(parts, " ") .. (hi < #cats and " ›" or "")
+  end
+  local function win_width(p)
+    local ok, w = pcall(function()
+      return vim.api.nvim_win_get_width(p.input.win.win)
+    end)
+    return ok and w or nil
+  end
+  local function switch(step)
+    return function(p)
+      idx = (idx - 1 + step) % #cats + 1
+      p.opts.items = by_cat[cats[idx]]
+      p.title = title(win_width(p))
+      p:find()
+    end
+  end
+  local both = { "i", "n" }
+  M.picker({
+    title = title(),
+    items = by_cat["全部"],
+    actions = { cat_next = switch(1), cat_prev = switch(-1) },
+    keys = {
+      ["<Tab>"] = { "cat_next", mode = both },
+      ["<S-Tab>"] = { "cat_prev", mode = both },
+      ["<C-l>"] = { "cat_next", mode = both },
+      ["<C-h>"] = { "cat_prev", mode = both },
+      -- 大文字は入力欄では文字として打つので、ノーマルモード(Esc 後)だけ
+      ["L"] = { "cat_next", mode = { "n" } },
+      ["H"] = { "cat_prev", mode = { "n" } },
+    },
+    on_pick = opts.on_pick,
+  })
+end
+
 -- データフレーム一覧を取って 1つ選ぶ(1つしか無い/カーソル下がDFならそれ)
 function M.pick_df(lang, cb, opts)
   opts = opts or {}

@@ -1,0 +1,389 @@
+{
+  "2カラム(テキスト)": {
+    "prefix": "col2",
+    "category": "レイアウト",
+    "key": "c",
+    "body": [
+      ":::: {.columns}",
+      "::: {.column width=\"${1:50}%\"}",
+      "$0",
+      ":::",
+      "",
+      "::: {.column width=\"${2:50}%\"}",
+      "",
+      ":::",
+      "::::"
+    ]
+  },
+  "3カラム": {
+    "prefix": "col3",
+    "category": "レイアウト",
+    "key": "3",
+    "body": [
+      ":::: {.columns}",
+      "::: {.column width=\"${1:33}%\"}",
+      "$0",
+      ":::",
+      "",
+      "::: {.column width=\"${2:33}%\"}",
+      "",
+      ":::",
+      "",
+      "::: {.column width=\"${3:33}%\"}",
+      "",
+      ":::",
+      "::::"
+    ]
+  },
+  "グリッド(HTML, 12分割)": {
+    "prefix": "grid",
+    "category": "レイアウト",
+    "body": [
+      "::: {.grid}",
+      "::: {.g-col-${1:6}}",
+      "$0",
+      ":::",
+      "",
+      "::: {.g-col-${2:6}}",
+      "",
+      ":::",
+      ":::"
+    ]
+  },
+  "右の余白に置く(column-margin)": {
+    "prefix": "margin",
+    "category": "レイアウト",
+    "key": "m",
+    "body": [
+      "::: {.column-margin}",
+      "$0",
+      ":::"
+    ]
+  },
+  "横幅を広げる(column-page / screen)": {
+    "prefix": "wide",
+    "category": "レイアウト",
+    "key": "w",
+    "body": [
+      "::: {.column-${1|page,page-inset,screen,screen-inset,body-outset|}}",
+      "$0",
+      ":::"
+    ]
+  },
+  "改ページ": {
+    "prefix": "pb",
+    "category": "レイアウト",
+    "key": "b",
+    "body": [
+      "{{< pagebreak >}}"
+    ],
+    "description": "Word / PDF / HTML 印刷で改ページ"
+  },
+  "出力形式で出し分け(content-visible)": {
+    "prefix": "onlyfmt",
+    "category": "レイアウト",
+    "key": "v",
+    "body": [
+      "::: {.content-${1|visible,hidden|} when-format=\"${2|html,docx,pptx,revealjs,pdf|}\"}",
+      "$0",
+      ":::"
+    ]
+  },
+  "Word のスタイルを当てる(custom-style)": {
+    "prefix": "wstyle",
+    "category": "レイアウト",
+    "body": [
+      "::: {custom-style=\"${1:スタイル名}\"}",
+      "$0",
+      ":::"
+    ]
+  },
+  "中央寄せ": {
+    "prefix": "center",
+    "category": "レイアウト",
+    "body": [
+      "::: {style=\"text-align: center;\"}",
+      "$0",
+      ":::"
+    ]
+  },
+  "画像(キャプション+相互参照)": {
+    "prefix": "img",
+    "category": "図表",
+    "key": "f",
+    "body": [
+      "![${1:キャプション}](${2:figures/plot.png}){#fig-${3:name} width=${4:80}%}"
+    ]
+  },
+  "画像を並べる(サブ図, layout-ncol)": {
+    "prefix": "imgs",
+    "category": "図表",
+    "key": "F",
+    "body": [
+      "::: {#fig-${1:name} layout-ncol=${2:2}}",
+      "![${3:A}](${4:a.png}){#fig-${1}-a}",
+      "",
+      "![${5:B}](${6:b.png}){#fig-${1}-b}",
+      "",
+      "${7:全体のキャプション}",
+      ":::"
+    ]
+  },
+  "Markdown の表(キャプション+相互参照)": {
+    "prefix": "mdtbl",
+    "category": "図表",
+    "key": "T",
+    "body": [
+      "| ${1:項目} | ${2:値} |",
+      "|:--|--:|",
+      "| $3 | $4 |",
+      "",
+      ": ${5:キャプション} {#tbl-${6:name}}"
+    ]
+  },
+  "チャンクの出力を並べる(layout-ncol)": {
+    "prefix": "outcols",
+    "category": "図表",
+    "body": [
+      "#| layout-ncol: ${1:2}",
+      "#| fig-cap:",
+      "#|   - \"${2:A}\"",
+      "#|   - \"${3:B}\""
+    ]
+  },
+  "折りたたみ callout": {
+    "prefix": "callfold",
+    "category": "callout",
+    "key": "O",
+    "body": [
+      "::: {.callout-${1|note,tip,warning,important,caution|} collapse=\"true\"}",
+      "## ${2:タイトル(クリックで開く)}",
+      "$0",
+      ":::"
+    ]
+  },
+  "脚注": {
+    "prefix": "fn",
+    "category": "文中",
+    "key": "n",
+    "body": [
+      "^[$0]"
+    ]
+  },
+  "文献の引用": {
+    "prefix": "cite",
+    "category": "文中",
+    "key": "@",
+    "body": [
+      "[@${1:key}]$0"
+    ]
+  },
+  "数式ブロック(番号つき)": {
+    "prefix": "eq",
+    "category": "文中",
+    "key": "e",
+    "body": [
+      "\\$\\$",
+      "$0",
+      "\\$\\$ {#eq-${1:name}}"
+    ]
+  },
+  "文字に色": {
+    "prefix": "color",
+    "category": "文中",
+    "key": "k",
+    "body": [
+      "[$0]{style=\"color: ${1:red};\"}"
+    ]
+  },
+  "マーカー(ハイライト)": {
+    "prefix": "mark",
+    "category": "文中",
+    "key": "h",
+    "body": [
+      "[$0]{.mark}"
+    ]
+  },
+  "下線": {
+    "prefix": "ul",
+    "category": "文中",
+    "key": "u",
+    "body": [
+      "[$0]{.underline}"
+    ]
+  },
+  "キーボード表記": {
+    "prefix": "kbd",
+    "category": "文中",
+    "body": [
+      "{{< kbd ${1:Ctrl-C} >}}"
+    ]
+  },
+  "ダミー文": {
+    "prefix": "lipsum",
+    "category": "文中",
+    "body": [
+      "{{< lipsum ${1:1} >}}"
+    ]
+  },
+  "新しいスライド": {
+    "prefix": "slide",
+    "category": "スライド",
+    "key": "-",
+    "body": [
+      "## ${1:タイトル}",
+      "",
+      "$0"
+    ]
+  },
+  "順に表示(incremental)": {
+    "prefix": "incr",
+    "category": "スライド",
+    "key": "i",
+    "body": [
+      "::: {.incremental}",
+      "- $0",
+      ":::"
+    ]
+  },
+  "一時停止(次の内容はクリックで)": {
+    "prefix": "pause",
+    "category": "スライド",
+    "key": "p",
+    "body": [
+      ". . ."
+    ]
+  },
+  "発表者ノート": {
+    "prefix": "notes",
+    "category": "スライド",
+    "key": "N",
+    "body": [
+      "::: {.notes}",
+      "$0",
+      ":::"
+    ]
+  },
+  "文字を小さくしたスライド": {
+    "prefix": "small",
+    "category": "スライド",
+    "body": [
+      "## ${1:タイトル} {.smaller}",
+      "",
+      "$0"
+    ]
+  },
+  "画面いっぱいの文字(r-fit-text)": {
+    "prefix": "fit",
+    "category": "スライド",
+    "body": [
+      "::: {.r-fit-text}",
+      "$0",
+      ":::"
+    ]
+  },
+  "背景画像のスライド": {
+    "prefix": "bgimg",
+    "category": "スライド",
+    "body": [
+      "## ${1:タイトル} {background-image=\"${2:img.png}\" background-size=\"${3|cover,contain|}\"}",
+      "",
+      "$0"
+    ]
+  },
+  "コード・警告を隠す(チャンクオプション)": {
+    "prefix": "hide",
+    "category": "チャンク",
+    "key": "x",
+    "body": [
+      "#| echo: false",
+      "#| warning: false",
+      "#| message: false"
+    ]
+  },
+  "他の notebook のセルを埋め込む": {
+    "prefix": "embed",
+    "category": "チャンク",
+    "body": [
+      "{{< embed ${1:notebook.ipynb}#${2:cell-label} >}}"
+    ]
+  },
+  "YAML: HTML(目次・番号・1ファイル)": {
+    "prefix": "yhtml",
+    "category": "文書",
+    "body": [
+      "---",
+      "title: \"${1:タイトル}\"",
+      "author: \"${2:名前}\"",
+      "date: today",
+      "lang: ja",
+      "format:",
+      "  html:",
+      "    toc: true",
+      "    number-sections: true",
+      "    code-fold: true",
+      "    embed-resources: true",
+      "---",
+      "",
+      "$0"
+    ]
+  },
+  "YAML: Word(テンプレート docx)": {
+    "prefix": "ydocx",
+    "category": "文書",
+    "body": [
+      "---",
+      "title: \"${1:タイトル}\"",
+      "lang: ja",
+      "format:",
+      "  docx:",
+      "    reference-doc: ${2:templates/reference.docx}",
+      "    toc: ${3|false,true|}",
+      "    number-sections: true",
+      "---",
+      "",
+      "$0"
+    ]
+  },
+  "YAML: スライド(revealjs)": {
+    "prefix": "yreveal",
+    "category": "文書",
+    "body": [
+      "---",
+      "title: \"${1:タイトル}\"",
+      "lang: ja",
+      "format:",
+      "  revealjs:",
+      "    slide-number: true",
+      "    incremental: false",
+      "    smaller: true",
+      "---",
+      "",
+      "$0"
+    ]
+  },
+  "YAML: PowerPoint": {
+    "prefix": "ypptx",
+    "category": "文書",
+    "body": [
+      "---",
+      "title: \"${1:タイトル}\"",
+      "lang: ja",
+      "format:",
+      "  pptx:",
+      "    reference-doc: ${2:templates/reference.pptx}",
+      "---",
+      "",
+      "$0"
+    ]
+  },
+  "YAML: 参考文献": {
+    "prefix": "ybib",
+    "category": "文書",
+    "body": [
+      "bibliography: ${1:references.bib}",
+      "csl: ${2:vancouver.csl}",
+      "link-citations: true"
+    ]
+  }
+}

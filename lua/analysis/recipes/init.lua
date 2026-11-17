@@ -162,104 +162,28 @@ local function start(recipe, where, lang)
   end)
 end
 
--- レシピ一覧。Tab / S-Tab(または C-l / C-h)でカテゴリのタブを切り替え
+-- レシピ一覧(カテゴリのタブ付き。操作は A.tab_picker)
 function M.pick()
   local where = A.capture_pos()
   local lang = A.lang()
-  local by_cat, cats = {}, {}
+  local items = {}
   for _, r in ipairs(M.list) do
     if r.lang == lang then
       local cat = M.category(r)
-      local item = {
+      items[#items + 1] = {
         text = cat .. " " .. r.name,
         label = r.name,
         detail = "[" .. cat .. "]",
+        cat = cat,
         recipe = r,
         preview = { text = r.body, ft = lang },
       }
-      if not by_cat[cat] then
-        by_cat[cat] = {}
-        cats[#cats + 1] = cat
-      end
-      table.insert(by_cat[cat], item)
     end
   end
-  local rank = {}
-  for i, c in ipairs(CAT_ORDER) do
-    rank[c] = i
-  end
-  local first = {}
-  for i, c in ipairs(cats) do
-    first[c] = i
-  end
-  table.sort(cats, function(a, b)
-    local ra, rb = rank[a] or (100 + first[a]), rank[b] or (100 + first[b])
-    return ra < rb
-  end)
-  by_cat["全部"] = {}
-  for _, c in ipairs(cats) do
-    vim.list_extend(by_cat["全部"], by_cat[c])
-  end
-  table.insert(cats, 1, "全部")
-
-  local idx = 1
-  -- タブ列は幅に収まる分だけ、今のタブを中心に表示。はみ出す側に ‹ / › を付ける
-  local function title(width)
-    local W = vim.fn.strdisplaywidth
-    local head = ("レシピ(%s) %d/%d "):format(lang, idx, #cats)
-    -- 初回は窓がまだ無いので、default レイアウトの入力欄の幅(全体 80% の左半分)で見積もる
-    local avail = (width or math.floor(vim.o.columns * 0.4)) - W(head) - 6
-    local label = function(i)
-      return i == idx and ("【" .. cats[i] .. " " .. #by_cat[cats[i]] .. "】") or cats[i]
-    end
-    local lo, hi = idx, idx
-    local used = W(label(idx))
-    local grew = true
-    while grew do
-      grew = false
-      for _, side in ipairs({ 1, -1 }) do
-        local j = side == 1 and hi + 1 or lo - 1
-        if cats[j] and used + 1 + W(label(j)) + 4 <= avail then
-          used = used + 1 + W(label(j))
-          if side == 1 then hi = j else lo = j end
-          grew = true
-        end
-      end
-    end
-    local parts = {}
-    for i = lo, hi do
-      parts[#parts + 1] = label(i)
-    end
-    return head .. (lo > 1 and "‹ " or "") .. table.concat(parts, " ") .. (hi < #cats and " ›" or "")
-  end
-  local function win_width(p)
-    local ok, w = pcall(function()
-      return vim.api.nvim_win_get_width(p.input.win.win)
-    end)
-    return ok and w or nil
-  end
-  local function switch(step)
-    return function(p)
-      idx = (idx - 1 + step) % #cats + 1
-      p.opts.items = by_cat[cats[idx]]
-      p.title = title(win_width(p))
-      p:find()
-    end
-  end
-  local mode = { "i", "n" }
-  A.picker({
-    title = title(),
-    items = by_cat["全部"],
-    actions = { cat_next = switch(1), cat_prev = switch(-1) },
-    keys = {
-      ["<Tab>"] = { "cat_next", mode = mode },
-      ["<S-Tab>"] = { "cat_prev", mode = mode },
-      ["<C-l>"] = { "cat_next", mode = mode },
-      ["<C-h>"] = { "cat_prev", mode = mode },
-      -- 大文字は入力欄では文字として打つので、ノーマルモード(Esc 後)だけ
-      ["L"] = { "cat_next", mode = { "n" } },
-      ["H"] = { "cat_prev", mode = { "n" } },
-    },
+  A.tab_picker({
+    name = "レシピ(" .. lang .. ")",
+    items = items,
+    order = CAT_ORDER,
     on_pick = function(sel)
       start(sel[1].recipe, where, lang)
     end,

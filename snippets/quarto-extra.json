@@ -1,6 +1,7 @@
 {
   "main.qmd 冒頭(utils読込+データ+キャッシュ連動)": {
     "prefix": "setup",
+    "category": "文書",
     "body": [
       "```{r}",
       "#| label: setup",
@@ -17,12 +18,14 @@
   },
   "パーツを include": {
     "prefix": "inc",
+    "category": "文書",
     "body": [
       "{{< include ${1:01_xxx}.qmd >}}$0"
     ]
   },
   "gt 表フォントを Times New Roman に": {
     "prefix": "gtfont",
+    "category": "チャンク",
     "body": [
       "```{css}",
       ".gt_table { font-family: \"Times New Roman\", \"Yu Mincho\", serif !important; }",
@@ -31,6 +34,7 @@
   },
   "図表番号を日本語に(YAML: 図1 / 表1)": {
     "prefix": "xrefja",
+    "category": "文書",
     "body": [
       "lang: ja",
       "crossref:",
@@ -44,6 +48,7 @@
   },
   "再現性情報(末尾にパッケージ版)": {
     "prefix": "sinfo",
+    "category": "チャンク",
     "body": [
       "## 実行環境 {.appendix}",
       "",

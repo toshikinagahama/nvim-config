@@ -1,6 +1,7 @@
 {
   "2カラム(左Rチャンク/右テキスト)": {
     "prefix": "cols",
+    "category": "レイアウト",
     "body": [
       ":::: {.columns}",
       "::: {.column width=\"${1:60}%\"}",
@@ -17,6 +18,7 @@
   },
   "Rチャンク": {
     "prefix": "rc",
+    "category": "チャンク",
     "body": [
       "```{r}",
       "$0",
@@ -25,6 +27,7 @@
   },
   "Pythonチャンク": {
     "prefix": "pc",
+    "category": "チャンク",
     "body": [
       "```{python}",
       "$0",
@@ -33,6 +36,7 @@
   },
   "図チャンク(相互参照)": {
     "prefix": "fig",
+    "category": "図表",
     "body": [
       "```{${1:r}}",
       "#| label: fig-${2:name}",
@@ -45,6 +49,7 @@
   },
   "表チャンク(相互参照)": {
     "prefix": "tbl",
+    "category": "図表",
     "body": [
       "```{${1:r}}",
       "#| label: tbl-${2:name}",
@@ -55,6 +60,7 @@
   },
   "gtsummary 群別表": {
     "prefix": "tbs",
+    "category": "R",
     "body": [
       "df %>%",
       "  select(${1:変数}, ${2:性別}) %>%",
@@ -65,6 +71,7 @@
   },
   "キャッシュ付きRチャンク(Rのみ)": {
     "prefix": "cache",
+    "category": "チャンク",
     "body": [
       "```{r}",
       "#| cache: true",
@@ -74,6 +81,7 @@
   },
   "Python表をmarkdownで出力": {
     "prefix": "asis",
+    "category": "チャンク",
     "body": [
       "```{python}",
       "#| output: asis",
@@ -83,6 +91,8 @@
   },
   "タブ切替": {
     "prefix": "tabs",
+    "category": "レイアウト",
+    "key": "t",
     "body": [
       "::: {.panel-tabset}",
       "",
@@ -99,6 +109,8 @@
   },
   "注意書きボックス": {
     "prefix": "callout",
+    "category": "callout",
+    "key": "o",
     "body": [
       "::: {.callout-${1|note,tip,warning,important,caution|}}",
       "## ${2:タイトル}",
@@ -108,6 +120,7 @@
   },
   "コード折りたたみ表示": {
     "prefix": "fold",
+    "category": "チャンク",
     "body": [
       "```{${1:r}}",
       "#| echo: true",
@@ -118,6 +131,7 @@
   },
   "TODOメモ(レンダー非表示)": {
     "prefix": "todo",
+    "category": "文中",
     "body": [
       "<!-- TODO: $0 -->"
     ]

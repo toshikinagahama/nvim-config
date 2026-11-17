@@ -33,6 +33,15 @@ vim.api.nvim_create_user_command("AnalysisErr", function(o)
   Q().jump_error(o.args)
 end, { nargs = "?", desc = "render エラー行へ" })
 
+-- qmd / md: スニペットを <localleader>s<key> に(snippets/*.json の "key")。\ss で一覧
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("analysis_snippet_keys", { clear = true }),
+  pattern = { "quarto", "markdown" },
+  callback = function(ev)
+    Q().snippet_keys(ev.buf)
+  end,
+})
+
 return {
   {
     "folke/which-key.nvim",
@@ -47,6 +56,7 @@ return {
         { "<localleader>a", group = "分析レシピ" },
         { "<localleader>q", group = "quarto" },
         { "<localleader>i", group = "挿入" },
+        { "<localleader>s", group = "スニペット(qmd)" },
       },
     },
   },
