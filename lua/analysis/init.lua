@@ -318,6 +318,10 @@ function M.pick_columns(lang, df, cb, opts)
   opts = opts or {}
   M.last_df[lang] = df.name
   local items = {}
+  -- optional な欄は先頭に「(なし)」→ 選ぶと空のリストを返す
+  if opts.optional then
+    items[1] = { text = "(なし)", label = "(なし・使わない)", skip = true, preview = { text = "", ft = "text" } }
+  end
   for _, c in ipairs(df.columns) do
     items[#items + 1] = {
       text = c.name, label = c.name,
@@ -329,6 +333,7 @@ function M.pick_columns(lang, df, cb, opts)
     title = (opts.title or "列") .. " [" .. df.name .. "]" .. (opts.single and "" or "  Tab=複数選択"),
     items = items,
     on_pick = function(sel)
+      sel = vim.tbl_filter(function(it) return not it.skip end, sel)
       cb(vim.tbl_map(function(it) return it.text end, sel))
     end,
   })

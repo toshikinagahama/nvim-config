@@ -152,7 +152,7 @@ return {
       {
         "<localleader>in",
         function()
-          require("analysis.recipes").run("列名変更(rename 雛形, 変更先は空)")
+          require("analysis.recipes").run("rename")
         end,
         ft = ft,
         desc = "列名変更(rename雛形)",
