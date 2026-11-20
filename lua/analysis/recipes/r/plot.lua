@@ -63,7 +63,7 @@ ggplot(d, aes(.g, {{y}})) +
   { if (nrow(pw_show) > 0) ggpubr::stat_pvalue_manual(pw_show, label = "p.adj.signif", tip.length = 0.01) } +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +  # 上の線の分の余白
   labs(x = {{by_str}},{{#overall}} subtitle = rstatix::get_test_label(overall, detailed = TRUE),{{/overall}}
-       caption = "* p<0.05, ** p<0.01, *** p<0.001, **** p<0.0001 ({{#np}}Wilcoxon{{/np}}{{^np}}t検定{{/np}}, Holm 補正)") +
+       caption = "* p<0.05, ** p<0.01, *** p<0.001, **** p<0.0001 ({{#np}}Wilcoxon{{/np}}{{^np}}t-test{{/np}}, Holm-adjusted)") +
   theme_minimal()]=],
   },
 
