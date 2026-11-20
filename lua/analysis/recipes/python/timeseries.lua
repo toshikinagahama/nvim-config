@@ -11,7 +11,8 @@ return {
     body = [[
 import pandas as pd
 import matplotlib.pyplot as plt
-ts = {{df}}.assign(_t=pd.to_datetime({{df}}[{{time}}])).set_index("_t")[{{y}}].sort_index()
+_to_t = lambda s: pd.to_datetime(s, unit="s") if pd.api.types.is_numeric_dtype(s) else pd.to_datetime(s)  # 数値の時刻列は「秒」として扱う
+ts = {{df}}.assign(_t=_to_t({{df}}[{{time}}])).set_index("_t")[{{y}}].sort_index()
 fig, ax = plt.subplots(figsize=(11, 4))
 ax.plot(ts.index, ts, lw=0.6, alpha=0.6, label="raw")
 ax.plot(ts.index, ts.rolling("5min").mean(), lw=1.5, label="移動平均 5min")   # 行数なら rolling(50, center=True)
@@ -38,7 +39,8 @@ plt.tight_layout(); plt.show()]],
 import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.seasonal import STL
-ts = {{df}}.assign(_t=pd.to_datetime({{df}}[{{time}}])).set_index("_t")[{{y}}].sort_index()
+_to_t = lambda s: pd.to_datetime(s, unit="s") if pd.api.types.is_numeric_dtype(s) else pd.to_datetime(s)  # 数値の時刻列は「秒」として扱う
+ts = {{df}}.assign(_t=_to_t({{df}}[{{time}}])).set_index("_t")[{{y}}].sort_index()
 ts = ts.resample("1D").mean().interpolate()   # 日単位にそろえる(粒度は要調整)
 res = STL(ts, period=7, robust=True).fit()      # period: 周期(日次データで週周期なら 7)
 res.plot(); plt.show()]],

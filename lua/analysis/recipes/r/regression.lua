@@ -96,11 +96,12 @@ pROC::ggroc(roc_all, legacy.axes = TRUE) +
     name = "交互作用(ロジスティック): 交互作用p + 層別OR",
     fields = { F.col("outcome", "アウトカム(2値)"), F.col("exposure", "曝露(主な説明変数)"), F.col("modifier", "効果修飾因子(性別など)"), F.cols("adjust", "調整変数") },
     body = [[
+adj <- setdiff({{adjust}}, c({{exposure_str}}, {{modifier_str}}))  # 曝露・修飾因子と重なる調整変数は外す
 d_i <- {{df}} %>%
-  dplyr::select({{outcome}}, {{exposure}}, {{modifier}}, all_of({{adjust}})) %>%
+  dplyr::select({{outcome}}, {{exposure}}, {{modifier}}, all_of(adj)) %>%
   tidyr::drop_na()
 bt <- \(x) paste0("`", x, "`")
-terms0 <- bt(c({{exposure_str}}, {{modifier_str}}, {{adjust}}))
+terms0 <- bt(c({{exposure_str}}, {{modifier_str}}, adj))
 m0 <- glm(reformulate(terms0, response = {{outcome_str}}), family = binomial, data = d_i)
 m1 <- glm(reformulate(c(terms0, paste0(terms0[1], ":", terms0[2])), response = {{outcome_str}}),
           family = binomial, data = d_i)
@@ -110,7 +111,7 @@ anova(m0, m1, test = "LRT")  # 交互作用の p 値
 d_i %>%
   dplyr::group_by({{modifier}}) %>%
   dplyr::group_modify(\(d, key) {
-    m <- glm(reformulate(bt(c({{exposure_str}}, {{adjust}})), response = {{outcome_str}}), family = binomial, data = d)
+    m <- glm(reformulate(bt(c({{exposure_str}}, adj)), response = {{outcome_str}}), family = binomial, data = d)
     broom::tidy(m, exponentiate = TRUE, conf.int = TRUE) %>%
       dplyr::filter(startsWith(term, {{exposure_str}}) | startsWith(term, bt({{exposure_str}}))) %>%
       dplyr::mutate(n = nrow(d))

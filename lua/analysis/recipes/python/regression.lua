@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 import statsmodels.formula.api as smf
 q = lambda c: f'Q("{c}")'   # 日本語・記号の列名対策
-formula = f"{q({{outcome}})} ~ " + " + ".join(q(c) for c in {{vars}})
+formula = f'{q({{outcome}})} ~ ' + " + ".join(q(c) for c in {{vars}})
 _d = {{df}}[[{{outcome}}] + {{vars}}].dropna()
 m = smf.logit(formula, data=_d).fit(disp=0)
 or_tab = pd.concat([np.exp(m.params), np.exp(m.conf_int()), m.pvalues], axis=1)
@@ -33,7 +33,7 @@ import statsmodels.formula.api as smf
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 q = lambda c: f'Q("{c}")'
 _d = {{df}}[[{{outcome}}] + {{vars}}].dropna()
-m = smf.ols(f"{q({{outcome}})} ~ " + " + ".join(q(c) for c in {{vars}}), data=_d).fit()
+m = smf.ols(f'{q({{outcome}})} ~ ' + " + ".join(q(c) for c in {{vars}}), data=_d).fit()
 print(m.summary().tables[1])
 X = m.model.exog
 vif = pd.Series([variance_inflation_factor(X, i) for i in range(1, X.shape[1])], index=m.model.exog_names[1:], name="VIF")
@@ -55,7 +55,7 @@ _d = {{df}}[[{{y}}] + {{vars}}].dropna()
 _binary = _d[{{y}}].nunique() == 2      # 2値ならロジスティック
 
 def _fit(terms):
-    f = f"{q({{y}})} ~ " + (" + ".join(q(t) for t in terms) or "1")
+    f = f'{q({{y}})} ~ ' + (" + ".join(q(t) for t in terms) or "1")
     return smf.logit(f, data=_d).fit(disp=0) if _binary else smf.ols(f, data=_d).fit()
 
 selected, remaining = [], list({{vars}})
@@ -88,8 +88,8 @@ import numpy as np
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 q = lambda c: f'Q("{c}")'
-_d = {{df}}[[{{y}}{{#exposure}}, {{exposure}}{{/exposure}}] + {{vars}}].dropna()
-f = f"{q({{y}})} ~ " + " + ".join(q(c) for c in {{vars}})
+_d = {{df}}[list(dict.fromkeys([{{y}}{{#exposure}}, {{exposure}}{{/exposure}}] + {{vars}}))].dropna()  # 重複列は1つに
+f = f'{q({{y}})} ~ ' + " + ".join(q(c) for c in {{vars}})
 m_p = smf.glm(f, data=_d, family=sm.families.Poisson(){{#exposure}}, exposure=_d[{{exposure}}]{{/exposure}}).fit()
 print(f"過分散の指標 = {m_p.pearson_chi2 / m_p.df_resid:.2f} (1 を大きく超えるなら負の二項)")
 m_nb = smf.negativebinomial(f, data=_d{{#exposure}}, exposure=_d[{{exposure}}]{{/exposure}}).fit(disp=0)

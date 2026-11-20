@@ -12,7 +12,7 @@ return {
 import statsmodels.formula.api as smf
 q = lambda c: f'Q("{c}")'
 _d = {{df}}[[{{y}}, {{id}}] + {{fixed}}].dropna()
-m = smf.mixedlm(f"{q({{y}})} ~ " + " + ".join(q(c) for c in {{fixed}}), data=_d, groups=_d[{{id}}]).fit(reml=True)
+m = smf.mixedlm(f'{q({{y}})} ~ ' + " + ".join(q(c) for c in {{fixed}}), data=_d, groups=_d[{{id}}]).fit(reml=True)
 print(m.summary())
 _var_id = float(m.cov_re.iloc[0, 0])
 print(f"ICC = {_var_id / (_var_id + m.scale):.3f}")
@@ -31,7 +31,7 @@ q = lambda c: f'Q("{c}")'
 _d = {{df}}[[{{y}}, {{id}}] + {{vars}}].dropna().sort_values({{id}})
 _binary = _d[{{y}}].nunique() == 2
 fam = sm.families.Binomial() if _binary else sm.families.Gaussian()
-m = smf.gee(f"{q({{y}})} ~ " + " + ".join(q(c) for c in {{vars}}), groups={{id}}, data=_d,
+m = smf.gee(f'{q({{y}})} ~ ' + " + ".join(q(c) for c in {{vars}}), groups={{id}}, data=_d,
             family=fam, cov_struct=sm.cov_struct.Exchangeable()).fit()
 print(m.summary())                    # ロバスト(サンドイッチ)SE
 if _binary:

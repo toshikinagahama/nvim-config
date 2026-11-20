@@ -46,6 +46,9 @@ def _desc(x):
     return f"{x.median():.2f} [{x.quantile(0.25):.2f}, {x.quantile(0.75):.2f}]"
 _t = {{df}}[{{time}}]
 tp = list(_t.cat.remove_unused_categories().cat.categories) if isinstance(_t.dtype, pd.CategoricalDtype) else list(pd.unique(_t.dropna()))  # 出てきた順。変えるなら ["pre", "post"]
+if len(tp) > 2:  # 3時点以上 → 最初と最後を比べる(別の組なら上の行で tp = ["pre", "mid"] のように指定)
+    print(f"3時点以上なので {tp[0]} vs {tp[-1]} を比較")
+    tp = [tp[0], tp[-1]]
 assert len(tp) == 2
 _rows = []
 for v in {{vars}}:

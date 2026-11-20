@@ -9,7 +9,7 @@ format:
     toc: true
     toc-location: left
     page-layout: full
-    embed-resources: true
+    # embed-resources は書かない: \qr の時だけ _quarto-embed.yml で1ファイル化(preview を速くするため)
   # 発表用スライドにするときは html を消してこちらを有効に
   # revealjs:
   #   width: 1280

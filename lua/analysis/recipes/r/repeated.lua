@@ -116,6 +116,10 @@ desc <- \(x) if (stat == "mean") sprintf("%.2f ± %.2f", mean(x), sd(x)) else
   sprintf("%.2f [%.2f, %.2f]", median(x), quantile(x, 0.25), quantile(x, 0.75))
 tp <- {{df}}[[{{time_str}}]]
 tp <- if (is.factor(tp)) levels(droplevels(tp)) else unique(as.character(na.omit(tp)))  # 出てきた順。変えるなら c("pre", "post")
+if (length(tp) > 2) {  # 3時点以上 → 最初と最後を比べる(別の組なら上の行で tp <- c("pre", "mid") のように指定)
+  message("3時点以上なので ", tp[1], " vs ", tp[length(tp)], " を比較")
+  tp <- tp[c(1, length(tp))]
+}
 stopifnot(length(tp) == 2)
 paired_res <- purrr::map_dfr({{vars}}, \(v) {
   w <- {{df}} %>%

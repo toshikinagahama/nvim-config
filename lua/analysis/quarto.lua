@@ -145,6 +145,12 @@ function M.pptx_post(file, since, out)
 end
 
 -- quarto render(ファイル単体)。fmt=nil で YAML の全 format、"pptx" 等で指定形式のみ
+-- プロジェクトに _quarto-embed.yml(render 時だけ embed-resources: true)があるか
+function M.embed_profile(file)
+  local root = vim.fs.find({ "_quarto.yml" }, { upward = true, path = vim.fn.fnamemodify(file, ":p:h") })[1]
+  return root and vim.uv.fs_stat(vim.fn.fnamemodify(root, ":h") .. "/_quarto-embed.yml") ~= nil
+end
+
 function M.render(fmt, file, extra)
   if not file then
     file = vim.api.nvim_buf_get_name(0)
@@ -153,6 +159,8 @@ function M.render(fmt, file, extra)
   end
   local cmd = { "quarto", "render", file }
   if fmt then vim.list_extend(cmd, { "--to", fmt }) end
+  -- html の配布用 render は 1ファイル化(_quarto-embed.yml の embed-resources: true)。preview は埋め込まず速く
+  if (fmt == nil or fmt == "html") and M.embed_profile(file) then vim.list_extend(cmd, { "--profile", "embed" }) end
   vim.list_extend(cmd, extra or {})
   -- main.qmd → 出力名を親フォルダ名に(analysis/記述統計/main.qmd → 記述統計.pptx)
   -- YAML に output-file があればそちら優先。形式指定時のみ(全形式 render は quarto に任せる)
@@ -471,6 +479,18 @@ function M.new_study(name, python)
     made[#made + 1] = "_quarto.yml"
   elseif not table.concat(vim.fn.readfile(quarto_yml), "\n"):match("execute%-dir:%s*project") then
     A.notify("_quarto.yml に `project: execute-dir: project` が無い → パスがずれるので追加推奨", vim.log.levels.WARN)
+  end
+  local embed_yml = root .. "/_quarto-embed.yml"
+  if vim.fn.filereadable(embed_yml) == 0 then
+    vim.fn.writefile({
+      "# \\qr(html render)の時だけ使うプロファイル: 画像・CSS を1つの html に埋め込む(配布用)",
+      "# preview(\\qp)はこれを使わない → 埋め込みしないぶん速い",
+      "# _quarto.yml / _metadata.yml / qmd に embed-resources(self-contained)を書くとそちらが優先されて preview も遅くなる",
+      "format:",
+      "  html:",
+      "    embed-resources: true",
+    }, embed_yml)
+    made[#made + 1] = "_quarto-embed.yml"
   end
   if write_template("analysis/_metadata.yml", root .. "/analysis/_metadata.yml") then made[#made + 1] = "analysis/_metadata.yml" end
   M.copy_templates(true)

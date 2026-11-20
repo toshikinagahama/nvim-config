@@ -32,7 +32,7 @@ _cols = {{vars}}
 print({{df}}[_cols].isna().mean().mul(100).round(1).sort_values(ascending=False))
 # A) 欠測のある行を落とす
 df_cc = {{df}}.dropna(subset=_cols)
-print(f"完全ケース: {len(df_cc)} / {len({{df}})}")
+print(f'完全ケース: {len(df_cc)} / {len({{df}})}')
 # B) 補完(数値=中央値, それ以外=最頻値)+ 補完フラグ列
 df_imp = {{df}}.copy()
 for c in _cols:
@@ -97,7 +97,8 @@ df_long.head()
     fields = { F.col("time", "日時列"), F.cols("vals", "値の列") },
     body = [[
 import pandas as pd
-_t = pd.to_datetime({{df}}[{{time}}])
+_to_t = lambda s: pd.to_datetime(s, unit="s") if pd.api.types.is_numeric_dtype(s) else pd.to_datetime(s)  # 数値の時刻列は「秒」として扱う
+_t = _to_t({{df}}[{{time}}])
 ts = {{df}}.assign(**{{{time}}: _t}).set_index({{time}}).sort_index()[{{vals}}]
 rule = "1min"   # "1s" "1min" "1h" "1D" "1W" など
 ts_r = ts.resample(rule).mean()
@@ -152,7 +153,7 @@ _safe = {c: f"v{i}" for i, c in enumerate(_cols)}            # 日本語列名�
 imp = MICEData(_d.rename(columns=_safe))
 _binary = _d[{{y}}].dropna().nunique() == 2
 fam = sm.families.Binomial() if _binary else sm.families.Gaussian()
-formula = f"{_safe[{{y}}]} ~ " + " + ".join(_safe[c] for c in {{vars}})
+formula = f'{_safe[{{y}}]} ~ ' + " + ".join(_safe[c] for c in {{vars}})
 res = MICE(formula, sm.GLM, imp, init_kwds={"family": fam}).fit(n_burnin=10, n_imputations=20)
 print({v: k for k, v in _safe.items()})
 print(res.summary())

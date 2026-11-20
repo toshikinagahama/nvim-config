@@ -38,8 +38,9 @@ import pandas as pd
 # {{df}} と df_b(別センサーなど)を時刻で揃える
 df_b = {{df_b}}                                 # もう一方のデータフレーム
 time_b = {{time_b_str}}                         # df_b の時刻列名
-a = {{df}}.assign(_t=pd.to_datetime({{df}}[{{time}}])).sort_values("_t")
-b = df_b.assign(_t=pd.to_datetime(df_b[time_b])).sort_values("_t")
+_to_t = lambda s: pd.to_datetime(s, unit="s") if pd.api.types.is_numeric_dtype(s) else pd.to_datetime(s)  # 数値の時刻列は「秒」として扱う
+a = {{df}}.assign(_t=_to_t({{df}}[{{time}}])).sort_values("_t")
+b = df_b.assign(_t=_to_t(df_b[time_b])).sort_values("_t")
 offset = pd.Timedelta(seconds=0)                # 機器間の時計ずれがわかっていれば補正
 b["_t"] = b["_t"] + offset
 # A) 最も近い時刻の値を付ける(許容 0.5 秒)

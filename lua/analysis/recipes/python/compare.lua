@@ -91,7 +91,7 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 q = lambda c: f'Q("{c}")'
 _d = {{df}}[[{{y}}, {{a}}, {{b}}]].dropna()
-m = smf.ols(f"{q({{y}})} ~ C({q({{a}})}, Sum) * C({q({{b}})}, Sum)", data=_d).fit()
+m = smf.ols(f'{q({{y}})} ~ C({q({{a}})}, Sum) * C({q({{b}})}, Sum)', data=_d).fit()
 print(sm.stats.anova_lm(m, typ=3).round(4))                 # SPSS の既定(Type III)
 sns.pointplot(data=_d, x={{a}}, y={{y}}, hue={{b}}, dodge=0.2, errorbar=("ci", 95), capsize=0.1)
 plt.title("交互作用プロット"); plt.show()
@@ -108,17 +108,17 @@ import statsmodels.formula.api as smf
 q = lambda c: f'Q("{c}")'
 _d = {{df}}[[{{y}}, {{g}}] + {{cov}}].dropna()
 _cov = " + ".join(q(c) for c in {{cov}})
-m = smf.ols(f"{q({{y}})} ~ C({q({{g}})}, Sum) + {_cov}", data=_d).fit()
+m = smf.ols(f'{q({{y}})} ~ C({q({{g}})}, Sum) + {_cov}', data=_d).fit()
 print(sm.stats.anova_lm(m, typ=3).round(4))
 # 共変量を平均に固定した調整済み平均
 grid = pd.DataFrame({ {{g}}: sorted(_d[{{g}}].unique()) })
 for c in {{cov}}:
-    grid[c] = _d[c].mean()
+    grid[c] = _d[c].mean() if pd.api.types.is_numeric_dtype(_d[c]) else _d[c].mode()[0]  # カテゴリは最頻値
 adj = m.get_prediction(grid).summary_frame()[["mean", "mean_ci_lower", "mean_ci_upper"]]
 adj.index = grid[{{g}}]
 print(adj.round(3))
 # 回帰の平行性(群 × 共変量 の交互作用が無いこと):
-_inter = " + ".join(f"C({q({{g}})}, Sum):{q(c)}" for c in {{cov}})
-sm.stats.anova_lm(smf.ols(f"{q({{y}})} ~ C({q({{g}})}, Sum) + {_cov} + {_inter}", data=_d).fit(), typ=3).round(4)]=],
+_inter = " + ".join(f'C({q({{g}})}, Sum):{q(c)}' for c in {{cov}})
+sm.stats.anova_lm(smf.ols(f'{q({{y}})} ~ C({q({{g}})}, Sum) + {_cov} + {_inter}', data=_d).fit(), typ=3).round(4)]=],
   },
 }

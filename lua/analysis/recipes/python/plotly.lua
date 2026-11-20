@@ -21,7 +21,8 @@ fig.show()]],
     body = [[
 import pandas as pd
 import plotly.express as px
-d = {{df}}.assign(_t=pd.to_datetime({{df}}[{{time}}])).sort_values("_t")
+_to_t = lambda s: pd.to_datetime(s, unit="s") if pd.api.types.is_numeric_dtype(s) else pd.to_datetime(s)  # 数値の時刻列は「秒」として扱う
+d = {{df}}.assign(_t=_to_t({{df}}[{{time}}])).sort_values("_t")
 fig = px.line(d, x="_t", y={{vals}}, template="simple_white")
 fig.update_xaxes(rangeslider_visible=True, title=None)
 fig.show()]],
