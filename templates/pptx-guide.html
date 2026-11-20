@@ -1,0 +1,70 @@
+<!-- reveal.js: pptx の本文エリアを点線で表示し、はみ出したスライドを赤枠+「はみ出し」ラベルで知らせる
+     g キー: 点線の表示/非表示   o キー(全体表示): はみ出しスライドが一覧で赤く見える
+     使い方(YAML): format: revealjs: include-after-body: templates/pptx-guide.html -->
+<style>
+  .pptx-guide {
+    position: absolute; left: 2.25%; top: 17.33%; width: 95.5%; height: 75.33%;
+    border: 2px dashed rgba(224, 138, 138, 0.85); box-sizing: border-box;
+    pointer-events: none; z-index: 30;
+  }
+  .pptx-guide.over { border: 3px solid #e53935; background: rgba(229, 57, 53, 0.04); }
+  .pptx-guide.over::after {
+    content: "はみ出し " attr(data-over);
+    position: absolute; right: 4px; bottom: 4px;
+    background: #e53935; color: #fff; font-size: 14px; line-height: 1.4;
+    padding: 1px 8px; border-radius: 3px; font-family: sans-serif;
+  }
+  .reveal.pptx-guide-off .pptx-guide { display: none; }
+  #pptx-guide-count {
+    position: fixed; left: 8px; bottom: 8px; z-index: 100; font: 12px sans-serif;
+    background: #e53935; color: #fff; padding: 2px 8px; border-radius: 3px; display: none;
+  }
+</style>
+<div id="pptx-guide-count"></div>
+<script>
+(function () {
+  var over = {};
+  function leaf(s) { return !s.querySelector(":scope > section") && !s.classList.contains("title-slide"); }
+  function check(s) {
+    if (!leaf(s) || s.offsetParent === null) return; // 非表示のスライドは測れない
+    var g = s.querySelector(":scope > .pptx-guide");
+    if (!g) { g = document.createElement("div"); g.className = "pptx-guide"; s.appendChild(g); }
+    var sr = s.getBoundingClientRect();
+    var scale = sr.width / (s.offsetWidth || 1);
+    var gb = g.offsetTop + g.offsetHeight, gr = g.offsetLeft + g.offsetWidth;
+    var maxB = 0, maxR = 0;
+    function take(e) {
+      var r = e.getBoundingClientRect();
+      if (!r.width && !r.height) return;
+      maxB = Math.max(maxB, (r.bottom - sr.top) / scale);
+      maxR = Math.max(maxR, (r.right - sr.left) / scale);
+    }
+    Array.prototype.forEach.call(s.children, function (c) {
+      if (c === g || c.tagName === "H2" || c.tagName === "ASIDE" || c.classList.contains("notes")) return;
+      take(c);
+      c.querySelectorAll("img, svg, table, canvas, pre, li, p").forEach(take);
+    });
+    var msg = [];
+    if (maxB > gb + 2) msg.push("下 " + Math.round(maxB - gb) + "px");
+    if (maxR > gr + 2) msg.push("右 " + Math.round(maxR - gr) + "px");
+    g.classList.toggle("over", msg.length > 0);
+    g.setAttribute("data-over", msg.join(" / "));
+    var idx = Reveal.getIndices(s); var key = (idx.h + 1) + (idx.v ? "." + (idx.v + 1) : "");
+    if (msg.length) over[key] = true; else delete over[key];
+    var keys = Object.keys(over);
+    var badge = document.getElementById("pptx-guide-count");
+    badge.style.display = keys.length ? "block" : "none";
+    badge.textContent = "はみ出し: " + keys.join(", ") + " 枚目";
+  }
+  function checkAll() { document.querySelectorAll(".reveal .slides section").forEach(check); }
+  Reveal.on("ready", function () { setTimeout(checkAll, 300); });
+  Reveal.on("slidechanged", function (e) { setTimeout(function () { check(e.currentSlide); }, 50); });
+  Reveal.on("overviewshown", function () { setTimeout(checkAll, 400); });
+  window.addEventListener("load", function () { setTimeout(checkAll, 600); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "g" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      document.querySelector(".reveal").classList.toggle("pptx-guide-off");
+    }
+  });
+})();
+</script>

@@ -1,0 +1,64 @@
+/*-- scss:defaults --*/
+// reveal.js を reference.pptx(\qx の PowerPoint)と同じ見た目・寸法にする
+//   スライド 1280×720(16:9 = pptx 13.33×7.5in)。1pt = 1280 / (13.33×72) ≈ 1.333px
+//   本文 16pt ≈ 21.3px / タイトル 20pt ≈ 26.7px・白文字・黒帯(#1F2329)+黄色線(#F2C94C)
+//   本文エリア: 左 2.25% / 上 17.33% / 幅 95.5% / 高さ 75.33%(pptx の Content Placeholder と同じ)
+$font-family-sans-serif: "BIZ UDPGothic", "BIZ UDGothic", "Hiragino Sans", "Noto Sans JP", Arial, sans-serif;
+$presentation-font-size-root: 21.3px;
+$presentation-heading-font: $font-family-sans-serif;
+$presentation-heading-color: #333333;
+$body-color: #333333;
+$body-bg: #ffffff;
+$link-color: #1f6feb;
+$presentation-h1-font-size: 2em;
+$presentation-h2-font-size: 1.25em;   // 26.7px
+$presentation-h3-font-size: 1.05em;
+
+/*-- scss:rules --*/
+$band-h: 12.67%;        // タイトル帯の高さ(868680 / 6858000)
+$body-top: 17.33%;      // 本文エリアの上端(1188720 / 6858000)
+$body-left: 2.25%;      // 本文エリアの左端(274320 / 12192000)
+
+.reveal .slides > section:not(.title-slide),
+.reveal .slides > section > section:not(.title-slide) {
+  height: 100%;
+  padding: calc(720px * 0.1733) calc(1280px * 0.0225) 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+// ## タイトル = 黒帯
+.reveal .slides section:not(.title-slide) > h2 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: $band-h;
+  margin: 0;
+  padding: 0 $body-left;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  background: #1F2329;
+  color: #ffffff;
+  font-size: 26.7px;
+  font-weight: bold;
+  border-bottom: 6px solid #F2C94C;   // 57150 EMU ≈ 6px
+}
+
+.reveal .slides section .columns { margin-top: 0; }
+.reveal p, .reveal li { line-height: 1.35; }
+.reveal ul, .reveal ol { margin-left: 1.1em; }
+
+// 表: pptx と同じく横罫線だけ
+.reveal table { border-collapse: collapse; font-size: 0.85em; }
+.reveal table th { border-top: 2px solid #333; border-bottom: 1px solid #333; }
+.reveal table tr:last-child td { border-bottom: 2px solid #333; }
+.reveal table td, .reveal table th { padding: 0.15em 0.6em; border-left: none; border-right: none; }
+
+// 黄色マーカー(==文字== / [文字]{.mark})
+.reveal mark, .reveal .mark { background: #fff59d; color: inherit; padding: 0 0.1em; }
+
+// フッター・ページ番号の色を pptx に合わせる
+.reveal .footer { color: #E08A8A; font-size: 14px; }
+.reveal .slide-number { color: #888888; background: transparent; font-size: 14px; }

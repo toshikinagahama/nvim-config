@@ -10,20 +10,25 @@ format:
     toc-location: left
     page-layout: full
     # embed-resources は書かない: \qr の時だけ _quarto-embed.yml で1ファイル化(preview を速くするため)
-  # 発表用スライドにするときは html を消してこちらを有効に
+  # 発表用スライド(reveal.js)にするときは html を消してこちらを有効に
+  #   pptx(\qx)と同じ見た目・寸法: 16:9・本文16pt・黒帯タイトル+黄色線・BIZ UDPGothic・表は横罫線
+  #   pptx-guide.html: pptx の本文エリアを点線で表示 → はみ出したスライドは赤枠+「はみ出し 下 ○px」
+  #     g キーで点線の表示切替 / o キー(一覧表示)ではみ出しスライドが一目でわかる / 左下に枚数
   # revealjs:
   #   width: 1280
-  #   height: 960
-  #   slide-number: true
-  #   embed-resources: true
+  #   height: 720
+  #   margin: 0
   #   center: false
   #   slide-level: 2
+  #   slide-number: true
+  #   footer: "Confidential"
+  #   fig-width: 10
+  #   fig-height: 5.5
+  #   theme: [default, templates/slides-pptx.scss]
+  #   include-after-body: templates/pptx-guide.html
   #   toc: true
   #   toc-depth: 2
   #   toc-title: "目次"
-  #   footer: "Confidential"
-  #   theme: [simple, templates/slides-work.scss]
-  #   include-after-body: templates/section-label.html
   # PowerPoint(16:9・本文16pt・黒帯タイトル・表は横罫線+Times。フッター文字は reference.pptx 内)
   # \qx は --to pptx なので、ここが無いと reference.pptx もフィルタも効かない → 常に有効にしておく
   # (\qp のプレビューは先頭の html。\qr は html と pptx 両方を出す)
