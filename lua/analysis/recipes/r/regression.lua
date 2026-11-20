@@ -6,10 +6,14 @@ return {
   cat = "回帰",
 
   {
-    name = "ロジスティック回帰: 1変数ずつ(調整なし vs 調整あり, 1SDあたりOR)",
+    name = "ロジスティック回帰: 1変数ずつ(調整なし vs 調整あり, 連続は1SDあたりOR・2値はそのまま)",
     fields = { F.col("outcome", "アウトカム(2値)"), F.cols("vars", "説明変数"), F.cols("adjust", "調整変数") },
     body = [[
-d_z <- {{df}} %>% dplyr::mutate(dplyr::across(all_of({{vars}}), \(x) as.numeric(scale(x))))
+# 連続変数(数値で3値以上)だけ z 化 → 1SDあたり OR。0/1・カテゴリはそのまま(1 vs 0 / 参照カテゴリ比の OR)
+is_cont <- \(x) is.numeric(x) && dplyr::n_distinct(x, na.rm = TRUE) > 2
+d_z <- {{df}} %>% dplyr::mutate(dplyr::across(all_of({{vars}}) & where(is_cont), \(x) structure(as.numeric(scale(x)), label = attr(x, "label"))))  # 変数ラベルは残す
+z_vars <- names(dplyr::select(d_z, all_of({{vars}}) & where(is_cont)))
+message("1SDあたり: ", paste(z_vars, collapse = ", "))
 adj_terms <- paste0("`", {{adjust}}, "`", collapse = " + ")
 t_crude <- d_z %>%
   dplyr::select({{outcome}}, all_of({{vars}})) %>%
@@ -19,7 +23,9 @@ t_adj <- d_z %>%
   tbl_uvregression(method = glm, y = {{outcome}}, include = all_of({{vars}}),
                    formula = paste("{y} ~ {x} +", adj_terms),
                    method.args = list(family = binomial), exponentiate = TRUE)
-tbl_merge(list(t_crude, t_adj), tab_spanner = c("**調整なし**", "**調整あり**"))]],
+sd_label <- \(t) modify_table_body(t, \(b) dplyr::mutate(b, label = ifelse(
+  variable %in% z_vars & row_type == "label", paste0(label, "(1SDあたり)"), label)))
+tbl_merge(list(sd_label(t_crude), sd_label(t_adj)), tab_spanner = c("**調整なし**", "**調整あり**"))]],
   },
 
   {
