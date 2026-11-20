@@ -64,7 +64,8 @@ function M.stop()
 end
 
 -- 開いているファイル(または file)だけを preview(ポート4200固定)
-function M.preview(file)
+-- extra: 追加の引数(例 { "--cache" })
+function M.preview(file, extra)
   if not file then
     file = vim.api.nvim_buf_get_name(0)
     if file == "" then return A.notify("ファイルを保存してから \\qp", vim.log.levels.WARN) end
@@ -72,7 +73,9 @@ function M.preview(file)
   end
   stop_job()
   local buf
-  preview_job, buf = open_term({ "quarto", "preview", file, "--port", "4200", "--no-browser" }, file,
+  local pcmd = { "quarto", "preview", file, "--port", "4200", "--no-browser" }
+  vim.list_extend(pcmd, extra or {})
+  preview_job, buf = open_term(pcmd, file,
     function() preview_job = nil end)
   local tries = 0
   local timer = vim.uv.new_timer()
@@ -119,7 +122,7 @@ function M.pptx_post(file, since, out)
 end
 
 -- quarto render(ファイル単体)。fmt=nil で YAML の全 format、"pptx" 等で指定形式のみ
-function M.render(fmt, file)
+function M.render(fmt, file, extra)
   if not file then
     file = vim.api.nvim_buf_get_name(0)
     if file == "" then return A.notify("ファイルを保存してから", vim.log.levels.WARN) end
@@ -127,6 +130,7 @@ function M.render(fmt, file)
   end
   local cmd = { "quarto", "render", file }
   if fmt then vim.list_extend(cmd, { "--to", fmt }) end
+  vim.list_extend(cmd, extra or {})
   -- main.qmd → 出力名を親フォルダ名に(analysis/記述統計/main.qmd → 記述統計.pptx)
   -- YAML に output-file があればそちら優先。形式指定時のみ(全形式 render は quarto に任せる)
   local out

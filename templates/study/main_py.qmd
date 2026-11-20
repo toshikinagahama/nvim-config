@@ -2,7 +2,7 @@
 subtitle: "全体まとめ"
 jupyter: python3
 execute:
-  cache: true   # jupyter-cache(uv pip install jupyter-cache)。ノートブック単位: どこか変えると全体を再実行
+  cache: false  # 普段はオフ。\qpc / \qrc / \qxc で有効(--cache)。jupyter-cache(uv pip install jupyter-cache)。ノートブック単位: どこか変えると全体を再実行
   error: true
 ---
 

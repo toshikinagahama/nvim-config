@@ -98,6 +98,11 @@ return {
       { "<localleader>qq", function() require("analysis.quarto").stop() end, ft = "quarto", desc = "Quarto preview停止" },
       { "<localleader>qr", function() require("analysis.quarto").render() end, ft = "quarto", desc = "Quarto render(YAMLの全format)" },
       { "<localleader>qx", function() require("analysis.quarto").render("pptx") end, ft = "quarto", desc = "Quarto render → pptx" },
+      -- c = キャッシュ有効で(普段は cache: false、重いときだけ)。r = キャッシュ作り直し
+      { "<localleader>qpc", function() require("analysis.quarto").preview(nil, { "--cache" }) end, ft = "quarto", desc = "Quarto preview(cache有効)" },
+      { "<localleader>qpr", function() require("analysis.quarto").preview(nil, { "--cache-refresh" }) end, ft = "quarto", desc = "Quarto preview(cache作り直し)" },
+      { "<localleader>qrc", function() require("analysis.quarto").render(nil, nil, { "--cache" }) end, ft = "quarto", desc = "Quarto render(cache有効)" },
+      { "<localleader>qxc", function() require("analysis.quarto").render("pptx", nil, { "--cache" }) end, ft = "quarto", desc = "Quarto render → pptx(cache有効)" },
       { "<localleader>ip", insert_chunk("python"), ft = "quarto", desc = "Insert python chunk" },
       { "<localleader>ir", insert_chunk("r"), ft = "quarto", desc = "Insert r chunk" },
       { "<C-M-p>", insert_chunk("python"), mode = { "n", "i" }, ft = "quarto", desc = "Insert python chunk" },
