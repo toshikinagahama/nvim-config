@@ -29,9 +29,24 @@ local function include_of(line)
   return line:match(INCLUDE)
 end
 
+M.term_height = 10 -- preview/render ターミナルの高さ(固定)
+
 local function open_term(cmd, file, on_exit)
   local source_win = vim.api.nvim_get_current_win()
-  vim.cmd("botright 10split")
+  local old = M.last_term
+  -- 前回のターミナル窓が見えていればそれを使い回す(下に窓が積み重ならないように)
+  local win
+  if old and vim.api.nvim_buf_is_valid(old) then
+    for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if vim.api.nvim_win_get_buf(w) == old then win = w break end
+    end
+  end
+  if win then
+    vim.api.nvim_set_current_win(win)
+  else
+    vim.cmd("botright split")
+    win = vim.api.nvim_get_current_win()
+  end
   vim.cmd("enew")
   local job = vim.fn.jobstart(cmd, {
     term = true,
@@ -40,8 +55,16 @@ local function open_term(cmd, file, on_exit)
     on_exit = on_exit,
   })
   vim.bo.bufhidden = "hide"
+  vim.wo[win].winfixheight = true -- 他の窓の開閉で高さが変わらないように
+  vim.api.nvim_win_set_height(win, M.term_height)
   M.last_term = vim.api.nvim_get_current_buf()
   M.last_file = file
+  -- 前回のターミナルバッファは、もう終わっていれば片付ける(実行中の render は残す)
+  if old and old ~= M.last_term and vim.api.nvim_buf_is_valid(old) then
+    local ch = vim.bo[old].channel
+    local running = ch and ch > 0 and vim.fn.jobwait({ ch }, 0)[1] == -1
+    if not running then pcall(vim.api.nvim_buf_delete, old, { force = true }) end
+  end
   vim.api.nvim_set_current_win(source_win)
   return job, M.last_term
 end
