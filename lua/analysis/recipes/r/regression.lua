@@ -23,6 +23,50 @@ tbl_merge(list(t_crude, t_adj), tab_spanner = c("**調整なし**", "**調整あ
   },
 
   {
+    name = "1変数ずつ回帰 tbl_uvregression: ロジスティック(OR, 調整変数を複数選択)",
+    fields = {
+      F.col("outcome", "アウトカム(2値)"),
+      F.cols("vars", "1つずつ回す説明変数"),
+      F.cols("adjust", "調整変数(複数可・Tab で選択)", { optional = true }),
+      F.yesno("crude", "調整なしの結果も横に並べる?", true),
+    },
+    body = [=[
+uv <- function(d, adjust = character()) {
+  tbl_uvregression(d, method = glm, method.args = list(family = binomial), exponentiate = TRUE, y = {{outcome}}, include = all_of({{vars}}),
+                   formula = paste(c("{y} ~ {x}", if (length(adjust)) paste0("`", adjust, "`")), collapse = " + "))
+}
+d_uv <- {{df}} %>% dplyr::select({{outcome}}, all_of(c({{vars}}{{#adjust}}, {{adjust}}{{/adjust}})))
+{{#adjust}}t_adj <- uv(d_uv, {{adjust}})  # 表には各説明変数の行だけ出る(調整変数の行は出ない)
+{{#crude}}t_crude <- uv(d_uv)
+tbl_merge(list(t_crude, t_adj), tab_spanner = c("**調整なし**", "**調整あり**"))
+{{/crude}}{{^crude}}t_adj
+{{/crude}}{{/adjust}}{{^adjust}}uv(d_uv)
+{{/adjust}}]=],
+  },
+
+  {
+    name = "1変数ずつ回帰 tbl_uvregression: 線形(β, 調整変数を複数選択)",
+    fields = {
+      F.col("outcome", "アウトカム(連続)"),
+      F.cols("vars", "1つずつ回す説明変数"),
+      F.cols("adjust", "調整変数(複数可・Tab で選択)", { optional = true }),
+      F.yesno("crude", "調整なしの結果も横に並べる?", true),
+    },
+    body = [=[
+uv <- function(d, adjust = character()) {
+  tbl_uvregression(d, method = lm, y = {{outcome}}, include = all_of({{vars}}),
+                   formula = paste(c("{y} ~ {x}", if (length(adjust)) paste0("`", adjust, "`")), collapse = " + "))
+}
+d_uv <- {{df}} %>% dplyr::select({{outcome}}, all_of(c({{vars}}{{#adjust}}, {{adjust}}{{/adjust}})))
+{{#adjust}}t_adj <- uv(d_uv, {{adjust}})  # 表には各説明変数の行だけ出る(調整変数の行は出ない)
+{{#crude}}t_crude <- uv(d_uv)
+tbl_merge(list(t_crude, t_adj), tab_spanner = c("**調整なし**", "**調整あり**"))
+{{/crude}}{{^crude}}t_adj
+{{/crude}}{{/adjust}}{{^adjust}}uv(d_uv)
+{{/adjust}}]=],
+  },
+
+  {
     name = "多変量ロジスティック回帰+VIF+ROC/AUC",
     fields = { F.col("outcome", "アウトカム(2値)"), F.cols("vars", "説明変数"), F.cols("adjust", "調整変数(ベースモデル)") },
     body = [[
