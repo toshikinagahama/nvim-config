@@ -138,6 +138,39 @@ def _nv_setup():
 
         run(path, fn)
 
+    def view_html(name, path):
+        def fn():
+            import json, os, random, time
+            from pathlib import Path
+
+            x = get(name)
+            if hasattr(x, "as_raw_html"):  # great_tables.GT
+                body = x.as_raw_html()
+            elif hasattr(x, "to_html"):  # pandas Styler / DataFrame
+                body = x.to_html() if hasattr(x, "export") else as_df(x).head(500).to_html()
+            elif hasattr(x, "_repr_html_"):
+                body = x._repr_html_()
+            else:
+                raise RuntimeError(f"{name} ({type(x).__name__}) は HTML 表示できない")
+            root = Path.home() / ".cache" / "figviewer"
+            root.mkdir(parents=True, exist_ok=True)
+            entry_id = time.strftime("%Y%m%d-%H%M%S") + "-" + "".join(random.choice("0123456789abcdef") for _ in range(6))
+            html = f"{entry_id}.html"
+            (root / html).write_text("<!doctype html><meta charset='utf-8'><body style='font-family:sans-serif;padding:12px'>" + body, encoding="utf-8")
+            ep = root / "entries.json"
+            try:
+                entries = json.loads(ep.read_text(encoding="utf-8"))
+            except Exception:
+                entries = []
+            entries.append({"id": entry_id, "kind": "html", "title": f"{name} (py)", "html": html, "files": [html],
+                            "run": entry_id, "exec": None, "time": time.strftime("%H:%M:%S"), "cell": f"view_html({name})"})
+            tmp = ep.with_suffix(".json.py.tmp")
+            tmp.write_text(json.dumps(entries, ensure_ascii=False), encoding="utf-8")
+            os.replace(tmp, ep)
+            return {"text": f"{name} (HTML) → http://localhost:8766"}
+
+        run(path, fn)
+
     def levels(df, col, path):
         def fn():
             import pandas as pd
@@ -198,7 +231,7 @@ def _nv_setup():
 
         run(path, fn)
 
-    return types.SimpleNamespace(out=out, objects=objects, dfs=dfs, peek=peek, tsv=tsv, view=view,
+    return types.SimpleNamespace(out=out, objects=objects, dfs=dfs, peek=peek, tsv=tsv, view=view, view_html=view_html,
                                  levels=levels, docx=docx)
 
 

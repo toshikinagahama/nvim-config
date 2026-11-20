@@ -513,6 +513,21 @@ function M.view(lang, name)
   M.pick_df(lang, function(df) send(df.name) end)
 end
 
+-- 1'. カーソル下の表を HTML の見た目のまま figviewer へ(gt / gtsummary / flextable / Styler / great_tables)
+function M.view_html(lang, name)
+  lang = lang or M.lang()
+  local function send(n)
+    ensure_figviewer(function()
+      M.query(lang, function(path)
+        return (lang == "r" and ".nv$view_html(%s, %s)" or "_nv.view_html(%s, %s)"):format(q(n), path)
+      end, function(res) notify(res.text) end)
+    end)
+  end
+  name = name or M.word()
+  if name and name ~= "" then return send(name) end
+  M.pick_df(lang, function(df) send(df.name) end)
+end
+
 -- 12. カーソル下の変数/列をその場で確認(kind = summary / table / hist)
 function M.peek(kind)
   local lang = M.lang()

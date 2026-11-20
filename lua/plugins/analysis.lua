@@ -116,6 +116,14 @@ return {
         desc = "表を figviewer で見る(:8766)",
       },
       {
+        "<localleader>dh",
+        function()
+          A().view_html()
+        end,
+        ft = ft,
+        desc = "表を HTML の見た目のまま figviewer で(:8766)",
+      },
+      {
         "<localleader>ps",
         function()
           A().peek("summary")

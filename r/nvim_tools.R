@@ -125,6 +125,37 @@ attach(local({
     list(text = sprintf("%s → http://localhost:8766", name))
   })
 
+  # \dh 表をHTMLの見た目のまま figviewer へ(gt / gtsummary / flextable / htmlwidget / data.frame)
+  nv$view_html <- function(name, path) nv$run(path, {
+    x <- nv$get(name)
+    root <- file.path(Sys.getenv("HOME"), ".cache", "figviewer")
+    dir.create(root, recursive = TRUE, showWarnings = FALSE)
+    id <- paste0(format(Sys.time(), "%Y%m%d-%H%M%S"), "-", paste(sample(c(0:9, letters[1:6]), 6, TRUE), collapse = ""))
+    html <- paste0(id, ".html")
+    out <- file.path(root, html)
+    if (inherits(x, "gtsummary")) x <- gtsummary::as_gt(x)
+    if (inherits(x, "gt_tbl")) {
+      gt::gtsave(x, out)
+    } else if (inherits(x, "flextable")) {
+      flextable::save_as_html(x, path = out)
+    } else if (inherits(x, "htmlwidget")) {
+      htmlwidgets::saveWidget(x, out, selfcontained = TRUE)
+    } else if (nv$is_tbl(x)) {
+      gt::gtsave(gt::gt(utils::head(nv$as_df(x), 500)), out)
+    } else {
+      stop(sprintf("%s (%s) は HTML 表示できない", name, class(x)[1]))
+    }
+    entries_path <- file.path(root, "entries.json")
+    entries <- if (file.exists(entries_path)) tryCatch(jsonlite::read_json(entries_path), error = function(e) list()) else list()
+    entries[[length(entries) + 1]] <- list(id = id, kind = "html", title = sprintf("%s (R)", name),
+                                          html = html, files = list(html), run = id, exec = NULL,
+                                          time = format(Sys.time(), "%H:%M:%S"), cell = sprintf("view_html(%s)", name))
+    tmp <- paste0(entries_path, ".r.tmp")
+    jsonlite::write_json(entries, tmp, auto_unbox = TRUE, null = "null", digits = NA)
+    file.rename(tmp, entries_path)
+    list(text = sprintf("%s (HTML) → http://localhost:8766", name))
+  })
+
   # \it 型変換: 列の水準(factor なら levels、それ以外はソートしたユニーク値)
   nv$levels <- function(df, col, path) nv$run(path, {
     v <- get(df, envir = globalenv())[[col]]
