@@ -10,3 +10,4 @@ data
 _bak_*/
 *.otter.*
 lua/config/local.lua
+__pycache__/

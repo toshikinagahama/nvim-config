@@ -25,6 +25,7 @@ format:
   # PowerPoint にするとき(16:9・本文16pt・黒帯タイトル・表は横罫線+Times。フッター文字は reference.pptx 内)
   # pptx:
   #   reference-doc: templates/reference.pptx
+  #   slide-level: 2                 # 必須: 無いと「# はじめに」直下の本文で pandoc が1と判定し ## がスライドにならない
   #   filters:                       # 相互参照付き表({#tbl-}/tbl-cap)が消えるのを防ぐ
   #     - path: templates/pptx-tables.lua
   #       at: pre-render

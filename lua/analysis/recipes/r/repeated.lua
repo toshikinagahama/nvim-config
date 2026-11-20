@@ -67,4 +67,105 @@ t.test(d_p${{after}}, d_p${{before}}, paired = TRUE)
 wilcox.test(d_p${{after}}, d_p${{before}}, paired = TRUE, exact = FALSE)
 cat("効果量 dz =", round(mean(diff) / sd(diff), 3), "\n")]],
   },
+
+  -- 表(gt)で出す版
+  {
+    name = "[ペア] 対応のある検定(wide: 前の列 × 後の列, 対応t + Wilcoxon → gt)",
+    fields = {
+      { key = "pre", kind = "cols", title = "前(1回目)の列 ※後と同じ順で" },
+      { key = "post", kind = "cols", title = "後(2回目)の列 ※前と同じ順で" },
+    },
+    body = [=[
+stat <- "mean"  # "median" で 中央値 [IQR] 表示
+fmt_p <- \(p) dplyr::if_else(p < 0.001, "<0.001", sprintf("%.3f", p))
+desc <- \(x) if (stat == "mean") sprintf("%.2f ± %.2f", mean(x), sd(x)) else
+  sprintf("%.2f [%.2f, %.2f]", median(x), quantile(x, 0.25), quantile(x, 0.75))
+stopifnot(length({{pre}}) == length({{post}}))
+paired_res <- purrr::map2_dfr({{pre}}, {{post}}, \(a, b) {
+  d <- tidyr::drop_na({{df}}[, c(a, b)])  # 両方そろった人だけ
+  x <- d[[a]]; y <- d[[b]]; dif <- y - x
+  tt <- t.test(y, x, paired = TRUE)
+  tibble::tibble(
+    変数 = paste(a, "→", b), n = nrow(d),
+    前 = desc(x), 後 = desc(y),
+    `差(後−前) [95%CI]` = sprintf("%.2f [%.2f, %.2f]", mean(dif), tt$conf.int[1], tt$conf.int[2]),
+    `効果量 dz` = mean(dif) / sd(dif),
+    `対応t p` = tt$p.value,
+    `Wilcoxon p` = wilcox.test(y, x, paired = TRUE, exact = FALSE)$p.value
+  )
+})
+paired_res %>%
+  gt::gt() %>%
+  gt::fmt_number(`効果量 dz`, decimals = 2) %>%
+  gt::fmt(c(`対応t p`, `Wilcoxon p`), fns = fmt_p) %>%
+  gt::tab_style(gt::cell_text(weight = "bold"),
+                gt::cells_body(columns = `Wilcoxon p`, rows = `Wilcoxon p` < 0.05)) %>%
+  gt::tab_footnote(if (stat == "mean") "平均 ± SD" else "中央値 [IQR]")]=],
+  },
+  {
+    name = "[ペア] 対応のある検定(long: ID × 時点の列, 2時点, 対応t + Wilcoxon → gt)",
+    fields = {
+      { key = "id", kind = "col", title = "ID(人)" },
+      { key = "time", kind = "col", title = "時点(2水準: 前/後)" },
+      { key = "vars", kind = "cols", title = "比較する変数" },
+    },
+    body = [=[
+stat <- "mean"  # "median" で 中央値 [IQR] 表示
+fmt_p <- \(p) dplyr::if_else(p < 0.001, "<0.001", sprintf("%.3f", p))
+desc <- \(x) if (stat == "mean") sprintf("%.2f ± %.2f", mean(x), sd(x)) else
+  sprintf("%.2f [%.2f, %.2f]", median(x), quantile(x, 0.25), quantile(x, 0.75))
+tp <- {{df}}[[{{time_str}}]]
+tp <- if (is.factor(tp)) levels(droplevels(tp)) else unique(as.character(na.omit(tp)))  # 出てきた順。変えるなら c("pre", "post")
+stopifnot(length(tp) == 2)
+paired_res <- purrr::map_dfr({{vars}}, \(v) {
+  w <- {{df}} %>%
+    dplyr::select({{id}}, {{time}}, value = dplyr::all_of(v)) %>%
+    tidyr::pivot_wider(names_from = {{time}}, values_from = value) %>%
+    tidyr::drop_na(dplyr::all_of(tp))
+  x <- w[[tp[1]]]; y <- w[[tp[2]]]; dif <- y - x
+  tt <- t.test(y, x, paired = TRUE)
+  tibble::tibble(
+    変数 = v, n = nrow(w),
+    !!tp[1] := desc(x), !!tp[2] := desc(y),
+    `差 [95%CI]` = sprintf("%.2f [%.2f, %.2f]", mean(dif), tt$conf.int[1], tt$conf.int[2]),
+    `効果量 dz` = mean(dif) / sd(dif),
+    `対応t p` = tt$p.value,
+    `Wilcoxon p` = wilcox.test(y, x, paired = TRUE, exact = FALSE)$p.value
+  )
+})
+paired_res %>%
+  gt::gt() %>%
+  gt::fmt_number(`効果量 dz`, decimals = 2) %>%
+  gt::fmt(c(`対応t p`, `Wilcoxon p`), fns = fmt_p) %>%
+  gt::tab_style(gt::cell_text(weight = "bold"),
+                gt::cells_body(columns = `Wilcoxon p`, rows = `Wilcoxon p` < 0.05)) %>%
+  gt::tab_footnote(paste0(if (stat == "mean") "平均 ± SD" else "中央値 [IQR]", "、差 = ", tp[2], " − ", tp[1]))]=],
+  },
+  {
+    name = "[ペア] 対応のある2値(McNemar, wide: 前の列 × 後の列 → gt)",
+    fields = {
+      { key = "pre", kind = "cols", title = "前(1回目)の2値列 ※後と同じ順で" },
+      { key = "post", kind = "cols", title = "後(2回目)の2値列 ※前と同じ順で" },
+    },
+    body = [=[
+fmt_p <- \(p) dplyr::if_else(p < 0.001, "<0.001", sprintf("%.3f", p))
+stopifnot(length({{pre}}) == length({{post}}))
+mcn_res <- purrr::map2_dfr({{pre}}, {{post}}, \(a, b) {
+  d <- tidyr::drop_na({{df}}[, c(a, b)])
+  lv <- sort(unique(c(as.character(d[[a]]), as.character(d[[b]]))))
+  stopifnot(length(lv) == 2)  # 2値のみ(Yes/No, 0/1 など)
+  tab <- table(factor(d[[a]], lv), factor(d[[b]], lv))
+  tibble::tibble(
+    変数 = paste(a, "→", b), 水準 = lv[2], n = nrow(d),
+    `前 n (%)` = sprintf("%d (%.1f%%)", tab[2, 1] + tab[2, 2], (tab[2, 1] + tab[2, 2]) / nrow(d) * 100),
+    `後 n (%)` = sprintf("%d (%.1f%%)", tab[1, 2] + tab[2, 2], (tab[1, 2] + tab[2, 2]) / nrow(d) * 100),
+    `なし→あり` = tab[1, 2], `あり→なし` = tab[2, 1],
+    `McNemar p` = mcnemar.test(tab)$p.value
+  )
+})
+mcn_res %>%
+  gt::gt() %>%
+  gt::fmt(`McNemar p`, fns = fmt_p) %>%
+  gt::tab_footnote("あり = 水準の列の値(2値の後ろ側)")]=],
+  },
 }

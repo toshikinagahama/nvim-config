@@ -4,6 +4,8 @@
 -- columns の下に書いた文(コメント等)は pptx だと次のスライドへ送られる
 --   → 目印付きで文字だけのカラム末尾に入れ、pptx_post.py がカラムの下(全幅)へ移す
 --     (両カラムとも図/表ならノートに退避して後処理でスライドへ)
+-- columns の下に図・表を書いた → 図・表から先は次スライドへ(同じタイトル)
+-- 1カラムに図・表が2個以上(図+表など)だと pandoc が2個目以降を捨てる → 次スライドへ送る
 -- 使い方(YAML): filters: [{path: templates/pptx-tables.lua, at: pre-render}]
 if not FORMAT:match("pptx") then return {} end
 
@@ -46,6 +48,48 @@ local function text_only(div)
   return ok
 end
 
+-- 図・表1個分のまとまり(チャンク出力 / 相互参照付き図表 / 素の図・表)
+local function has_visual(b)
+  local v = false
+  pandoc.walk_block(b, {
+    Image = function() v = true end,
+    Table = function() v = true end,
+    Figure = function() v = true end,
+  })
+  return v
+end
+
+local function is_visual_unit(b)
+  if b.t == "Figure" or b.t == "Table" or b.t == "FloatRefTarget" then return true end
+  if b.t == "Para" or b.t == "Plain" then
+    for _, x in ipairs(b.content) do if x.t == "Image" then return true end end
+    return false
+  end
+  if b.t == "Div" then
+    if b.classes:includes("cell-output-display") or b.identifier:match("^fig%-") or b.identifier:match("^tbl%-") then
+      return has_visual(b)
+    end
+  end
+  return false
+end
+
+-- 1カラムに図・表が2個以上あると pandoc は2個目以降を黙って捨てる(図+表だと表が消える)
+--   → 最初の1個だけ残し、残りは取り出す(columns の後ろに改スライドで並べる)
+local function take_extras(blocks, st)
+  local out = pandoc.List()
+  for _, b in ipairs(blocks) do
+    if is_visual_unit(b) then
+      if st.seen then st.extras:insert(b) else st.seen = true; out:insert(b) end
+    elseif b.t == "Div" then
+      b.content = take_extras(b.content, st)
+      out:insert(b)
+    else
+      out:insert(b)
+    end
+  end
+  return out
+end
+
 local function columns_below(blocks)
   local out, i = pandoc.List(), 1
   while i <= #blocks do
@@ -53,8 +97,19 @@ local function columns_below(blocks)
     out:insert(b)
     i = i + 1
     if b.t == "Div" and b.classes:includes("columns") then
+      local extras = pandoc.List()
+      for _, c in ipairs(b.content) do
+        if c.t == "Div" and c.classes:includes("column") then
+          local st = { seen = false, extras = pandoc.List() }
+          c.content = take_extras(c.content, st)
+          extras:extend(st.extras)
+        end
+      end
       local tail = pandoc.List()
+      -- columns の下に図・表(チャンク出力)が来たら、そこから先は次スライドへ(カラム内やノートに入れると消える)
+      local rest = false
       while i <= #blocks and not is_break(blocks[i]) do
+        if has_visual(blocks[i]) then rest = true break end
         tail:insert(blocks[i])
         i = i + 1
       end
@@ -84,6 +139,62 @@ local function columns_below(blocks)
           out:insert(pandoc.Div(nd, pandoc.Attr("", { "notes" })))
         end
       end
+      -- 取り出した図・表は1個ずつ改スライド(タイトルは pptx_post.py が「〜（続き）」に)
+      for _, e in ipairs(extras) do
+        out:insert(pandoc.HorizontalRule())
+        if e.t == "Div" and not e.identifier:match("^fig%-") and not e.identifier:match("^tbl%-") then
+          out:extend(flatten(e)) -- Div 内の表は pptx で落ちる
+        else
+          out:insert(e)
+        end
+      end
+      if rest then out:insert(pandoc.HorizontalRule()) end
+    end
+  end
+  return out
+end
+
+-- 図・表の後に続く文 → pandoc は次スライドへ送る(タイトル無し)
+--   → 目印付きでノートに退避し、pptx_post.py が図・表の下へ置く(図は縮める)
+local function notes_below(tail)
+  local nd = pandoc.List({ pandoc.Para({ pandoc.Str(BELOW) }) })
+  for _, tb in ipairs(tail) do -- ノートでは箇条書きの記号が消えるので「• 」を文字で付ける
+    if tb.t == "BulletList" or tb.t == "OrderedList" then
+      for n, item in ipairs(tb.content) do
+        local mark = tb.t == "BulletList" and "• " or (n .. ". ")
+        local inl = pandoc.Inlines({ pandoc.Str(mark) })
+        inl:extend(pandoc.utils.blocks_to_inlines(item))
+        nd:insert(pandoc.Para(inl))
+      end
+    else
+      nd:insert(tb)
+    end
+  end
+  return pandoc.Div(nd, pandoc.Attr("", { "notes" }))
+end
+
+local function is_text_block(b)
+  if b.t == "Div" and (b.classes:includes("notes") or b.classes:includes("columns")) then return false end
+  return not is_break(b) and not has_visual(b)
+end
+
+local function text_after_visual(blocks)
+  local out, i = pandoc.List(), 1
+  while i <= #blocks do
+    local b = blocks[i]
+    out:insert(b)
+    i = i + 1
+    if not (b.t == "Div" and b.classes:includes("columns")) and has_visual(b) then
+      local tail = pandoc.List()
+      while i <= #blocks and is_text_block(blocks[i]) do
+        tail:insert(blocks[i])
+        i = i + 1
+      end
+      local txt = false
+      for _, t in ipairs(tail) do
+        if pandoc.utils.stringify(t):match("%S") and not (t.t == "Div" and t.classes:includes("cell")) then txt = true end
+      end
+      if txt then out:insert(notes_below(tail)) else out:extend(tail) end
     end
   end
   return out
@@ -92,7 +203,7 @@ end
 return {
   {
     Pandoc = function(doc)
-      doc.blocks = columns_below(doc.blocks)
+      doc.blocks = text_after_visual(columns_below(doc.blocks))
       return doc
     end,
   },

@@ -94,8 +94,8 @@ function M.preview(file)
 end
 
 -- pptx の後処理(章ラベル・表キャプションを上へ): templates/pptx_post.py(プロジェクト優先)を実行
-function M.pptx_post(file, since)
-  local out = vim.fn.fnamemodify(file, ":r") .. ".pptx"
+function M.pptx_post(file, since, out)
+  out = out or vim.fn.fnamemodify(file, ":r") .. ".pptx"
   local st = vim.uv.fs_stat(out)
   if not st or st.mtime.sec < (since or 0) - 1 then return end
   local script
@@ -127,12 +127,26 @@ function M.render(fmt, file)
   end
   local cmd = { "quarto", "render", file }
   if fmt then vim.list_extend(cmd, { "--to", fmt }) end
+  -- main.qmd → 出力名を親フォルダ名に(analysis/記述統計/main.qmd → 記述統計.pptx)
+  -- YAML に output-file があればそちら優先。形式指定時のみ(全形式 render は quarto に任せる)
+  local out
+  if fmt and vim.fn.fnamemodify(file, ":t:r") == "main" then
+    local has_of = false
+    for _, l in ipairs(vim.fn.readfile(file, "", 60)) do
+      if l:match("^%s*output%-file:") then has_of = true break end
+    end
+    local ext = ({ pptx = "pptx", docx = "docx", pdf = "pdf", typst = "pdf" })[fmt] or "html"
+    if not has_of then
+      out = vim.fn.fnamemodify(file, ":p:h") .. "/" .. vim.fn.fnamemodify(file, ":p:h:t") .. "." .. ext
+      vim.list_extend(cmd, { "--output", vim.fn.fnamemodify(out, ":t") })
+    end
+  end
   local started = os.time()
   open_term(cmd, file, function(_, code)
     vim.schedule(function()
       if code == 0 then
         A.notify(("quarto render %s: 完了"):format(fmt or ""))
-        M.pptx_post(file, started)
+        M.pptx_post(file, started, out and out:match("%.pptx$") and out or nil)
       else
         A.notify(("quarto render 失敗 (code %d) → \\qe でエラー箇所へ"):format(code), vim.log.levels.ERROR)
       end

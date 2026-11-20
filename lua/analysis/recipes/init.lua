@@ -17,7 +17,7 @@ local M = {}
 
 -- タブの並び順(ここに無いカテゴリは読み込み順で後ろに並ぶ)
 local CAT_ORDER = {
-  "前処理", "記述", "群比較", "反復測定", "相関", "回帰", "混合・GEE", "生存",
+  "読込・保存", "前処理", "記述", "群比較", "反復測定", "相関", "回帰", "混合・GEE", "生存",
   "多変量", "信頼性", "診断・一致", "疫学", "検出力", "時系列", "周波数", "同期", "図", "seaborn", "plotly",
 }
 
@@ -124,6 +124,9 @@ end
 
 -- 欄を順番に埋める(列はピッカー、input は vim.ui.input)。途中で Esc → 中止
 local function start(recipe, where, lang)
+  if recipe.action then -- 独自の動作(ファイル選択など)
+    return recipe.action(where, lang)
+  end
   local function run_fields(df)
     local values, i, n = {}, 0, #recipe.fields
     local function next_field()
