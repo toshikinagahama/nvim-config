@@ -1,5 +1,7 @@
 # analysis/ 以下の全 qmd 共通(子フォルダにも継承)。パスはこのファイルの場所(analysis/)基準
 author: "名前"
+date: now                      # render した日時(タイトル下に出る)。日付だけなら today
+date-format: "YYYY-MM-DD HH:mm"
 from: markdown+mark
 format:
   html:
@@ -22,13 +24,17 @@ format:
   #   footer: "Confidential"
   #   theme: [simple, templates/slides-work.scss]
   #   include-after-body: templates/section-label.html
-  # PowerPoint にするとき(16:9・本文16pt・黒帯タイトル・表は横罫線+Times。フッター文字は reference.pptx 内)
-  # pptx:
-  #   reference-doc: templates/reference.pptx
-  #   slide-level: 2                 # 必須: 無いと「# はじめに」直下の本文で pandoc が1と判定し ## がスライドにならない
-  #   filters:                       # 相互参照付き表({#tbl-}/tbl-cap)が消えるのを防ぐ
-  #     - path: templates/pptx-tables.lua
-  #       at: pre-render
+  # PowerPoint(16:9・本文16pt・黒帯タイトル・表は横罫線+Times。フッター文字は reference.pptx 内)
+  # \qx は --to pptx なので、ここが無いと reference.pptx もフィルタも効かない → 常に有効にしておく
+  # (\qp のプレビューは先頭の html。\qr は html と pptx 両方を出す)
+  pptx:
+    reference-doc: templates/reference.pptx
+    slide-level: 2                 # 必須: 無いと「# はじめに」直下の本文で pandoc が1と判定し ## がスライドにならない
+    fig-width: 10                  # スライド 13.3×7.5in に合わせた既定の図サイズ(チャンクの fig-width で個別に変更可)
+    fig-height: 5.5
+    filters:                       # 相互参照付き表の消失・columns 下の文・図表の後の文 などの対策
+      - path: templates/pptx-tables.lua
+        at: pre-render
   # 章ラベル・表キャプションを上へ: \qx は自動。ターミナルからも効かせるなら _quarto.yml に
   #   project:
   #     post-render: analysis/templates/pptx_post.py   (要 python-pptx)
@@ -36,6 +42,12 @@ execute:
   echo: false
   message: false
   warning: false
+  cache: false                   # 普段はオフ。\qpc / \qrc / \qxc で --cache(キャッシュ有効)
+fig-dpi: 300                     # 図をくっきり(既定 96 だと pptx で粗い)
+# R の図で日本語が豆腐(□)になるなら ragg を入れてこれを有効に
+# knitr:
+#   opts_chunk:
+#     dev: "ragg_png"
 lang: en
 crossref:
   fig-title: "Fig"

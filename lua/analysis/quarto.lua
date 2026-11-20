@@ -367,7 +367,14 @@ function M.new_study(name, python)
   -- プロジェクト設定(無いときだけ)
   local quarto_yml = root .. "/_quarto.yml"
   if vim.fn.filereadable(quarto_yml) == 0 then
-    vim.fn.writefile({ "project:", "  execute-dir: project" }, quarto_yml)
+    vim.fn.writefile({
+      "project:",
+      "  execute-dir: project   # コードのパスはプロジェクト直下基準(here::here と一致)",
+      "  # プロジェクト一括 render(quarto render)で main.qmd だけ出す(パーツ単体の出力を作らない)",
+      "  # render: [\"analysis/**/main.qmd\"]",
+      "  # ターミナルからの render でも pptx 後処理をする(\\qx は不要・要 python-pptx)",
+      "  # post-render: analysis/templates/pptx_post.py",
+    }, quarto_yml)
     made[#made + 1] = "_quarto.yml"
   elseif not table.concat(vim.fn.readfile(quarto_yml), "\n"):match("execute%-dir:%s*project") then
     A.notify("_quarto.yml に `project: execute-dir: project` が無い → パスがずれるので追加推奨", vim.log.levels.WARN)
