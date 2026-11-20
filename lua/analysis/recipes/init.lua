@@ -137,12 +137,17 @@ local function start(recipe, where, lang)
       end
       local title = ("%d/%d %s"):format(i, n, f.title) .. (f.optional and "(省略可)" or "")
       if f.kind == "input" then
-        vim.ui.input({ prompt = title .. ": ", default = f.default and tostring(f.default) or nil }, function(v)
+        local default = f.default
+        if type(default) == "function" then
+          default = default()
+        end
+        default = default ~= nil and tostring(default) or nil
+        vim.ui.input({ prompt = title .. ": ", default = default }, function(v)
           if v == nil then
             return
           end
           if v == "" and not f.optional then
-            v = f.default and tostring(f.default) or ""
+            v = default or ""
           end
           values[f.key] = v
           next_field()

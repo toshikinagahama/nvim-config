@@ -1,4 +1,5 @@
 -- R / 読込・保存
+local F = require("analysis.recipes.fields")
 return {
   lang = "r",
   cat = "読込・保存",
@@ -35,12 +36,43 @@ df <- purrr::map(files, \(f) readr::read_csv(f, show_col_types = FALSE)) %>%
 dplyr::count(df, file)]=],
   },
   {
-    name = "[保存] データフレームを保存(parquet / rds / csv / Excel)",
-    fields = {},
+    name = "[保存] parquet(型・factor 保持、Python と共有可)",
+    fields = { F.input("dir", "保存先フォルダ(プロジェクト直下基準)", F.out_dir) },
     body = [=[
-out_dir <- here::here("data/processed")  # utils.R の processedDataDir を使うならそれに
+out_dir <- here::here("{{dir}}")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-# 使う行だけ残す
+arrow::write_parquet({{df}}, file.path(out_dir, "{{df}}.parquet"))]=],
+  },
+  {
+    name = "[保存] rds(R 専用・何でも保存できる)",
+    fields = { F.input("dir", "保存先フォルダ(プロジェクト直下基準)", F.out_dir) },
+    body = [=[
+out_dir <- here::here("{{dir}}")
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+saveRDS({{df}}, file.path(out_dir, "{{df}}.rds"))]=],
+  },
+  {
+    name = "[保存] csv(BOM 付き → Excel で文字化けしない)",
+    fields = { F.input("dir", "保存先フォルダ(プロジェクト直下基準)", F.out_dir) },
+    body = [=[
+out_dir <- here::here("{{dir}}")
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+readr::write_excel_csv({{df}}, file.path(out_dir, "{{df}}.csv"), na = "")]=],
+  },
+  {
+    name = "[保存] Excel(xlsx。複数シートは list(名前 = df, ...))",
+    fields = { F.input("dir", "保存先フォルダ(プロジェクト直下基準)", F.out_dir) },
+    body = [=[
+out_dir <- here::here("{{dir}}")
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+writexl::write_xlsx(list({{df}} = {{df}}), file.path(out_dir, "{{df}}.xlsx"))]=],
+  },
+  {
+    name = "[保存] 全形式まとめて(parquet / rds / csv / Excel、使う行だけ残す)",
+    fields = { F.input("dir", "保存先フォルダ(プロジェクト直下基準)", F.out_dir) },
+    body = [=[
+out_dir <- here::here("{{dir}}")
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 arrow::write_parquet({{df}}, file.path(out_dir, "{{df}}.parquet"))  # 型・factor 保持、Python と共有可
 saveRDS({{df}}, file.path(out_dir, "{{df}}.rds"))  # R 専用・何でも保存できる
 readr::write_excel_csv({{df}}, file.path(out_dir, "{{df}}.csv"), na = "")  # BOM 付き → Excel で文字化けしない

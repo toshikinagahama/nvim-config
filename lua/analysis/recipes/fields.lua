@@ -5,6 +5,7 @@
 -- 第3(input は第4)引数の opts:
 --   optional = true   列なら一覧の先頭に「(なし)」が出る / input なら空欄で飛ばせる
 --                     本文では {{#key}}…{{/key}}(ある時だけ)/ {{^key}}…{{/key}}(無い時だけ)で書き分ける
+--   default に関数を渡すと、レシピ実行時に呼んで初期値にする(プロジェクトごとに変わる値など)
 --   fallback = "全体"  省略した時に {{key}} へ入れる文字(そのまま埋め込む。Python なら '"全体"' のように引用符ごと)
 local F = {}
 
@@ -22,6 +23,15 @@ end
 
 function F.input(key, title, default, opts)
   return field("input", key, title, vim.tbl_extend("force", { default = default }, opts or {}))
+end
+
+-- 保存先フォルダの初期値: プロジェクトにある data/ 以下の加工済みフォルダを探す(無ければ data/processed)
+function F.out_dir()
+  local root = require("analysis.extra").root(vim.api.nvim_buf_get_name(0))
+  for _, d in ipairs({ "data/02_processed", "data/processed", "data/03_processed", "data/interim", "data/01_interim", "output" }) do
+    if vim.fn.isdirectory(root .. "/" .. d) == 1 then return d end
+  end
+  return "data/processed"
 end
 
 return F

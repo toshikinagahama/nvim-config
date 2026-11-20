@@ -1,4 +1,5 @@
 -- Python / 読込・保存
+local F = require("analysis.recipes.fields")
 local T = { lang = "python", cat = "読込・保存" }
 local L = T
 local function add(name, fields, body) L[#L + 1] = { name = name, fields = fields, body = body } end
@@ -37,12 +38,15 @@ files = sorted((ROOT / "data/raw").glob("*.csv"))
 df = pd.concat([pd.read_csv(f).assign(file=f.name) for f in files], ignore_index=True)
 df["file"].value_counts()]=] }
 
-add("[保存] データフレームを保存(parquet / pickle / csv / Excel)", {}, [=[
-]=] .. ROOT .. [=[
-
-out_dir = ROOT / "data/processed"
-out_dir.mkdir(parents=True, exist_ok=True)
-# 使う行だけ残す
+local DIR = { F.input("dir", "保存先フォルダ(プロジェクト直下基準)", F.out_dir) }
+local OUT = ROOT .. "\n\nout_dir = ROOT / \"{{dir}}\"\nout_dir.mkdir(parents=True, exist_ok=True)\n"
+add("[保存] parquet(型保持・R と共有可。要 pyarrow)", DIR, OUT .. [=[{{df}}.to_parquet(out_dir / "{{df}}.parquet", index=False)]=])
+add("[保存] pickle(Python 専用・何でも保存できる)", DIR, OUT .. [=[{{df}}.to_pickle(out_dir / "{{df}}.pkl")]=])
+add("[保存] csv(BOM 付き → Excel で文字化けしない)", DIR, OUT .. [=[{{df}}.to_csv(out_dir / "{{df}}.csv", index=False, encoding="utf-8-sig")]=])
+add("[保存] Excel(xlsx。要 openpyxl)", DIR, OUT .. [=[
+with pd.ExcelWriter(out_dir / "{{df}}.xlsx") as w:  # 複数シートは to_excel を並べる
+    {{df}}.to_excel(w, sheet_name="{{df}}", index=False)]=])
+add("[保存] 全形式まとめて(parquet / pickle / csv / Excel、使う行だけ残す)", DIR, OUT .. [=[
 {{df}}.to_parquet(out_dir / "{{df}}.parquet", index=False)  # 型保持・R と共有可(arrow::read_parquet)。要 pyarrow
 {{df}}.to_pickle(out_dir / "{{df}}.pkl")  # Python 専用・何でも保存できる
 {{df}}.to_csv(out_dir / "{{df}}.csv", index=False, encoding="utf-8-sig")  # BOM 付き → Excel で文字化けしない
