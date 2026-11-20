@@ -84,7 +84,9 @@ local function fill(recipe, lang, df, values)
   end)
   for _, f in ipairs(recipe.fields) do
     local v = values[f.key]
-    if not has(v) and f.fallback then
+    if f.kind == "yesno" then -- luacheck: ignore 542
+      -- {{#key}} / {{^key}} で処理済み
+    elseif not has(v) and f.fallback then
       local text, str = f.fallback, A.q((f.fallback:gsub('^"(.*)"$', "%1")))
       body = body:gsub("{{" .. f.key .. "}}", function()
         return text
@@ -115,7 +117,7 @@ local function needs_df(recipe)
     return true
   end
   for _, f in ipairs(recipe.fields) do
-    if f.kind ~= "input" then
+    if f.kind ~= "input" and f.kind ~= "yesno" then
       return true
     end
   end
@@ -136,7 +138,16 @@ local function start(recipe, where, lang)
         return A.insert_code(where, lang, fill(recipe, lang, df and df.name or "", values))
       end
       local title = ("%d/%d %s"):format(i, n, f.title) .. (f.optional and "(省略可)" or "")
-      if f.kind == "input" then
+      if f.kind == "yesno" then
+        local items = f.default and { "はい", "いいえ" } or { "いいえ", "はい" }
+        vim.ui.select(items, { prompt = title }, function(choice)
+          if choice == nil then
+            return
+          end
+          values[f.key] = choice == "はい" and "1" or ""
+          next_field()
+        end)
+      elseif f.kind == "input" then
         local default = f.default
         if type(default) == "function" then
           default = default()

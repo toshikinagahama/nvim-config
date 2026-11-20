@@ -2,6 +2,7 @@
 --   F.col("key", "見出し")              1列     → R: `a`          / Python: "a"
 --   F.cols("key", "見出し")             複数列  → R: c("a", "b")  / Python: ["a", "b"]
 --   F.input("key", "見出し", "初期値")   文字入力 → そのまま埋め込む(数値・式・オブジェクト名など)
+--   F.yesno("key", "見出し", true)      はい/いいえ → 本文の {{#key}}…{{/key}}(はい)/ {{^key}}…{{/key}}(いいえ)で出し分け
 -- 第3(input は第4)引数の opts:
 --   optional = true   列なら一覧の先頭に「(なし)」が出る / input なら空欄で飛ばせる
 --                     本文では {{#key}}…{{/key}}(ある時だけ)/ {{^key}}…{{/key}}(無い時だけ)で書き分ける
@@ -19,6 +20,10 @@ end
 
 function F.cols(key, title, opts)
   return field("cols", key, title, opts)
+end
+
+function F.yesno(key, title, default, opts)
+  return field("yesno", key, title, vim.tbl_extend("force", { default = default ~= false }, opts or {}))
 end
 
 function F.input(key, title, default, opts)
