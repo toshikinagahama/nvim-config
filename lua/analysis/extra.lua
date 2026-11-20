@@ -27,6 +27,21 @@ local function relpath(root, path)
   root = vim.fs.normalize(root):gsub("/$", "")
   path = vim.fs.normalize(path)
   if path:sub(1, #root + 1) == root .. "/" then return path:sub(#root + 2) end
+  -- macOS: 濁点などの Unicode 正規化(NFC/NFD)が root と path で違うと文字列比較が一致しない
+  --   → 親を辿り、root と同じ実体(dev+ino)のディレクトリを探して相対化する
+  local rs = vim.uv.fs_stat(root)
+  if rs then
+    local parts = {}
+    local dir = path
+    while true do
+      local parent = vim.fs.dirname(dir)
+      if not parent or parent == dir then break end
+      table.insert(parts, 1, vim.fs.basename(dir))
+      local s = vim.uv.fs_stat(parent)
+      if s and s.ino == rs.ino and s.dev == rs.dev then return table.concat(parts, "/") end
+      dir = parent
+    end
+  end
   return path
 end
 
