@@ -34,6 +34,40 @@ return {
   },
 
   {
+    name = "群別の箱ひげ図+有意差アスタリスク(2群・3群以上, 多重比較 Holm)",
+    fields = {
+      F.col("y", "数値(縦軸)"),
+      F.col("by", "群(横軸)"),
+      F.yesno("np", "ノンパラ(Wilcoxon / Kruskal-Wallis)? いいえ→ t検定 / ANOVA", true),
+      F.yesno("overall", "全体の検定(3群以上の差)を上に書く?", true),
+      F.yesno("sig_only", "有意なペアだけ線を引く?(いいえ→ ns も表示)", true),
+    },
+    body = [=[
+d <- {{df}} %>%
+  dplyr::filter(!is.na({{y}}), !is.na({{by}})) %>%
+  dplyr::mutate(.g = factor({{by}}))
+# ペアごとの検定(Holm 補正)→ アスタリスク: * <0.05, ** <0.01, *** <0.001, **** <0.0001
+pw <- d %>%
+  rstatix::{{#np}}wilcox_test{{/np}}{{^np}}t_test{{/np}}({{y}} ~ .g) %>%
+  rstatix::adjust_pvalue(method = "holm") %>%  # 2群でも p.adj 列を作る
+  rstatix::add_significance("p.adj") %>%
+  rstatix::add_xy_position(x = ".g", step.increase = 0.08)
+{{#sig_only}}pw_show <- dplyr::filter(pw, p.adj < 0.05)
+{{/sig_only}}{{^sig_only}}pw_show <- pw
+{{/sig_only}}{{#overall}}overall <- rstatix::{{#np}}kruskal_test{{/np}}{{^np}}anova_test{{/np}}(d, {{y}} ~ .g)
+{{/overall}}pw  # p 値の一覧(論文の表・本文用)
+
+ggplot(d, aes(.g, {{y}})) +
+  geom_boxplot(outlier.shape = NA, fill = "grey92", width = 0.6) +
+  geom_jitter(width = 0.15, alpha = 0.4, size = 1) +
+  { if (nrow(pw_show) > 0) ggpubr::stat_pvalue_manual(pw_show, label = "p.adj.signif", tip.length = 0.01) } +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +  # 上の線の分の余白
+  labs(x = {{by_str}},{{#overall}} subtitle = rstatix::get_test_label(overall, detailed = TRUE),{{/overall}}
+       caption = "* p<0.05, ** p<0.01, *** p<0.001, **** p<0.0001 ({{#np}}Wilcoxon{{/np}}{{^np}}t検定{{/np}}, Holm 補正)") +
+  theme_minimal()]=],
+  },
+
+  {
     name = "散布図+回帰直線(詳細: 色分け / 式・R² / 95%CI / y=x)",
     fields = {
       F.col("x", "x"),
