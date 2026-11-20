@@ -79,6 +79,6 @@ tree <- rpart::rpart(reformulate(sprintf("`%s`", {{vars}}), response = {{y_str}}
 rpart::printcp(tree)
 best_cp <- tree$cptable[which.min(tree$cptable[, "xerror"]), "CP"]
 tree_p <- rpart::prune(tree, cp = best_cp)
-rpart.plot::rpart.plot(tree_p, type = 4, extra = 104, roundint = FALSE)]],
+rpart.plot::rpart.plot(tree_p, type = 4, extra = if (tree_p$method == "class") 104 else 101, roundint = FALSE)  # 分類: 割合+件数 / 回帰: 平均+件数]],
   },
 }

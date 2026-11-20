@@ -12,7 +12,7 @@ return {
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from factor_analyzer import FactorAnalyzer
+from factor_analyzer import FactorAnalyzer  # scikit-learn 1.8 以降だと fit で落ちる → uv pip install "scikit-learn<1.8"
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity, calculate_kmo
 _d = {{df}}[{{items}}].dropna()
 chi2, p = calculate_bartlett_sphericity(_d)
