@@ -51,7 +51,7 @@ pw <- d %>%
   rstatix::{{#np}}wilcox_test{{/np}}{{^np}}t_test{{/np}}({{y}} ~ .g) %>%
   rstatix::adjust_pvalue(method = "holm") %>%  # 2群でも p.adj 列を作る
   rstatix::add_significance("p.adj") %>%
-  rstatix::add_xy_position(x = ".g", step.increase = 0.08)
+  rstatix::add_xy_position(x = ".g", step.increase = 0.15)  # 線の間隔(重なるなら増やす)
 {{#sig_only}}pw_show <- dplyr::filter(pw, p.adj < 0.05)
 {{/sig_only}}{{^sig_only}}pw_show <- pw
 {{/sig_only}}{{#overall}}overall <- rstatix::{{#np}}kruskal_test{{/np}}{{^np}}anova_test{{/np}}(d, {{y}} ~ .g)

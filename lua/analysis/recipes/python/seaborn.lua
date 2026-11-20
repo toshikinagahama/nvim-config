@@ -74,7 +74,7 @@ fig, ax = plt.subplots(figsize=(5, 4.5))
 sns.boxplot(data=d, x={{by}}, y={{y}}, order=order, showfliers=False, color="0.92", width=0.6, ax=ax)
 sns.stripplot(data=d, x={{by}}, y={{y}}, order=order, color="k", alpha=0.4, size=3, jitter=0.15, ax=ax)
 show = pw{{#sig_only}}[pw["p.adj"] < 0.05]{{/sig_only}}.assign(span=lambda t: [abs(order.index(a) - order.index(b)) for a, b in zip(t.group1, t.group2)]).sort_values("span")
-top, step = d[{{y}}].max(), (d[{{y}}].max() - d[{{y}}].min()) * 0.08
+top, step = d[{{y}}].max(), (d[{{y}}].max() - d[{{y}}].min()) * 0.1
 for k, r in enumerate(show.itertuples()):
     x1, x2, h = order.index(r.group1), order.index(r.group2), top + step * (k + 1)
     ax.plot([x1, x1, x2, x2], [h - step * 0.25, h, h, h - step * 0.25], color="k", lw=1)
