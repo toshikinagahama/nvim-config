@@ -162,7 +162,7 @@ local function start(recipe, where, lang)
   A.pick_df(lang, function(df)
     A.last_df[lang] = df.name
     run_fields(df)
-  end)
+  end, { always = true, title = "データフレーム(" .. recipe.name .. ")" })
 end
 
 -- レシピ一覧(カテゴリのタブ付き。操作は A.tab_picker)

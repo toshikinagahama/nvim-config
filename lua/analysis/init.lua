@@ -386,7 +386,7 @@ function M.pick_df(lang, cb, opts)
     local by_name = {}
     for _, d in ipairs(dfs) do by_name[d.name] = d end
     if opts.prefer and by_name[opts.prefer] then return cb(by_name[opts.prefer]) end
-    if #dfs == 1 then return cb(dfs[1]) end
+    if #dfs == 1 and not opts.always then return cb(dfs[1]) end -- always: 1個でも一覧を出す
     local items = {}
     for _, d in ipairs(dfs) do
       local cols = vim.tbl_map(function(c) return c.name end, d.columns)
