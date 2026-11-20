@@ -217,6 +217,76 @@ function M.part(all)
   M.preview(tmp)
 end
 
+-- カーソル位置の ## / ### セクションだけ preview
+--   level = nil: カーソル直上の見出し(## でも ### でも)/ 2: 直上の ## まで遡る
+--   それより前のコードチャンクは「#| include: false」で実行だけする(読込・前処理を引き継ぐ)
+function M.section(level)
+  local file = vim.api.nvim_buf_get_name(0)
+  if file == "" then return A.notify("ファイルを保存してから", vim.log.levels.WARN) end
+  vim.cmd("silent! write")
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local cur = vim.api.nvim_win_get_cursor(0)[1]
+  -- YAML ヘッダ
+  local yaml_end = 0
+  if lines[1] == "---" then
+    for i = 2, #lines do
+      if lines[i] == "---" then yaml_end = i break end
+    end
+  end
+  -- 見出し行(コードチャンクの中の # コメントは除く)
+  local heads, in_code = {}, false
+  for i = yaml_end + 1, #lines do
+    local l = lines[i]
+    if l:match("^%s*```") then
+      in_code = not in_code
+    elseif not in_code then
+      local hashes = l:match("^(#+)%s")
+      if hashes then heads[#heads + 1] = { line = i, level = #hashes } end
+    end
+  end
+  local start
+  for k = #heads, 1, -1 do
+    local h = heads[k]
+    if h.line <= cur and h.level >= 2 and (level == nil or h.level == level) then start = h break end
+  end
+  if not start then
+    return A.notify(level and ("カーソルより上に %s 見出しが無い"):format(("#"):rep(level)) or "カーソルより上に ## / ### 見出しが無い",
+      vim.log.levels.WARN)
+  end
+  local stop = #lines
+  for _, h in ipairs(heads) do
+    if h.line > start.line and h.level <= start.level then stop = h.line - 1 break end
+  end
+  local out = {}
+  for i = 1, yaml_end do out[#out + 1] = lines[i] end
+  -- 前のチャンク: 実行だけ(表示しない)
+  local i = yaml_end + 1
+  while i < start.line do
+    local l = lines[i]
+    if l:match("^%s*```+%s*{") then
+      out[#out + 1] = ""
+      out[#out + 1] = l
+      out[#out + 1] = "#| include: false"
+      i = i + 1
+      while i < start.line and not lines[i]:match("^%s*```+%s*$") do
+        out[#out + 1] = lines[i]
+        i = i + 1
+      end
+      out[#out + 1] = lines[i] or "```"
+    end
+    i = i + 1
+  end
+  out[#out + 1] = ""
+  for j = start.line, stop do out[#out + 1] = lines[j] end
+  local dir = vim.fn.fnamemodify(file, ":h")
+  local tmp = dir .. "/section-preview-" .. vim.fn.fnamemodify(file, ":t:r") .. ".qmd"
+  M.stop()
+  vim.fn.writefile(out, tmp)
+  M.temp_files[#M.temp_files + 1] = tmp
+  A.notify(("セクション preview: %s(%d〜%d 行)"):format(vim.trim(lines[start.line]), start.line, stop))
+  M.preview(tmp)
+end
+
 -- include を展開したときの行 → {元ファイル, 行}
 local function expand(file, acc, depth)
   acc = acc or {}

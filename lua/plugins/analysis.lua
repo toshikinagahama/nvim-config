@@ -243,6 +243,22 @@ return {
         desc = "先頭〜このパーツまで preview",
       },
       {
+        "<localleader>qs",
+        function()
+          Q().section()
+        end,
+        ft = "quarto",
+        desc = "カーソルの ## / ### セクションだけ preview",
+      },
+      {
+        "<localleader>qS",
+        function()
+          Q().section(2)
+        end,
+        ft = "quarto",
+        desc = "カーソルを含む ## セクションまるごと preview",
+      },
+      {
         "<localleader>qe",
         function()
           Q().jump_error()
