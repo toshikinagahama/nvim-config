@@ -23,7 +23,8 @@ ft_paper <- function(x, caption = NULL, note = NULL, font = "Times New Roman",
     flextable::align(j = -1, align = "center", part = "header") |>
     flextable::padding(padding.top = 1, padding.bottom = 1, part = "all") |>
     flextable::autofit() |>
-    flextable::fit_to_width(max_width = width)   # A4縦の本文幅 ≈ 6.5インチ(横向きなら 9)
+    flextable::fit_to_width(max_width = width) |>   # A4縦の本文幅 ≈ 6.5インチ(横向きなら 9)
+    flextable::set_table_properties(layout = "fixed")   # Word/LibreOffice で列幅を固定(autofit だと入れ子の表で潰れる)
   if (!is.null(caption) && nzchar(caption)) ft <- flextable::set_caption(ft, caption)
   if (!is.null(note) && nzchar(note)) {
     ft <- ft |>
