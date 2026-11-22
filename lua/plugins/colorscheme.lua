@@ -8,6 +8,13 @@ return {
       style = "night",
       transparent = true,
       styles = { sidebars = "transparent", floats = "transparent" },
+      on_highlights = function(hl, c)
+        -- カーソル下の記号と同じものを LSP が塗る(document highlight)。既定は背景色付きで、
+        -- R の languageserver はコメント行まで塗ることがあり目立つ → 下線だけにする
+        for _, g in ipairs({ "LspReferenceText", "LspReferenceRead", "LspReferenceWrite" }) do
+          hl[g] = { underline = true, sp = c.fg_gutter }
+        end
+      end,
     },
   },
   { "LazyVim/LazyVim", opts = { colorscheme = "tokyonight" } },
