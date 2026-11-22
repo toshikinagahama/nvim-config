@@ -7,7 +7,8 @@ return {
     opts = {
       style = "night",
       transparent = true,
-      styles = { sidebars = "transparent", floats = "transparent" },
+      -- comments / keywords の斜体を切る: tmux+WezTerm 経由で斜体の日本語が背景付きの帯で描かれて目立つため
+      styles = { comments = { italic = false }, keywords = { italic = false }, sidebars = "transparent", floats = "transparent" },
       on_highlights = function(hl, c)
         -- カーソル下の記号と同じものを LSP が塗る(document highlight)。既定は背景色付きで、
         -- R の languageserver はコメント行まで塗ることがあり目立つ → 下線だけにする
