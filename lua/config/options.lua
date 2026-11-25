@@ -41,6 +41,22 @@ if vim.env.SSH_TTY then
   vim.opt.clipboard = "unnamedplus"
 end
 
+-- WSL: share the clipboard with Windows (win32yank.exe if installed, otherwise clip.exe / powershell)
+if vim.fn.has("wsl") == 1 and not vim.env.SSH_TTY then
+  if vim.fn.executable("win32yank.exe") == 0 then
+    vim.g.clipboard = {
+      name = "WSL clip.exe",
+      copy = { ["+"] = "clip.exe", ["*"] = "clip.exe" },
+      paste = {
+        ["+"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).ToString().Replace("`r", ""))',
+        ["*"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).ToString().Replace("`r", ""))',
+      },
+      cache_enabled = 0,
+    }
+  end
+  vim.opt.clipboard = "unnamedplus"
+end
+
 vim.opt.number = true
 vim.opt.relativenumber = false -- 行番号は絶対表示
 vim.opt.wrap = true -- 画面端で折り返し(j/k は LazyVim 既定で gj/gk 動作)
