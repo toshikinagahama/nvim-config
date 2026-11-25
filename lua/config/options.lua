@@ -57,6 +57,10 @@ if vim.fn.has("wsl") == 1 and not vim.env.SSH_TTY then
   vim.opt.clipboard = "unnamedplus"
 end
 
+-- Detect Japanese legacy encodings (Shift_JIS/CP932 C sources, EUC-JP). Order matters: utf-8 first, latin1 last.
+-- Files are saved back in the detected encoding (check with :set fenc?).
+vim.opt.fileencodings = { "ucs-bom", "utf-8", "cp932", "euc-jp", "latin1" }
+
 vim.opt.number = true
 vim.opt.relativenumber = false -- 行番号は絶対表示
 vim.opt.wrap = true -- 画面端で折り返し(j/k は LazyVim 既定で gj/gk 動作)
