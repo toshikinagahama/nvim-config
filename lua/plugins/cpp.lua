@@ -22,20 +22,8 @@ return {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
-        clangd = {
-          mason = not arm, -- on arm64 use the system clangd (sudo apt install clangd)
-          cmd = {
-            "clangd",
-            "--background-index",
-            "--clang-tidy",
-            "--header-insertion=iwyu",
-            "--completion-style=detailed",
-            "--function-arg-placeholders",
-            "--fallback-style=llvm",
-            -- let clangd find the system headers of gcc/g++ (WSL / Linux)
-            "--query-driver=/usr/bin/gcc,/usr/bin/g++,/usr/bin/cc,/usr/bin/c++,/usr/bin/clang*",
-          },
-        },
+        -- clangd cmd / --query-driver are defined in embedded.lua (shared with PlatformIO etc.)
+        clangd = { mason = not arm }, -- on arm64 use the system clangd (sudo apt install clangd)
       },
     },
   },

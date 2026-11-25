@@ -176,6 +176,12 @@ local query_driver = table.concat({
   home .. "/.espressif/tools/*/*/*/bin/*",
   home .. "/zephyr-sdk-*/gnu/*/bin/*",
   "/opt/homebrew/bin/arm-none-eabi-*",
+  -- system compilers (WSL / Linux desktop C/C++): lets clangd find gcc/g++ standard headers
+  "/usr/bin/gcc*",
+  "/usr/bin/g++*",
+  "/usr/bin/cc",
+  "/usr/bin/c++",
+  "/usr/bin/clang*",
 }, ",")
 
 return {
